@@ -1,0 +1,497 @@
+** 170p
+#data source settings
+spring.datasource.url=jdbc:h2:tcp://localhost/~/test
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
+
+#JPA settings
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+
+** 171p
+package com.multi.contactsapp.domain;
+......
+@Entity
+public class Contact {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private long no;
+  private String name;
+  private String tel;
+  private String address;
+
+  //생성자와 Setter,Getter 생략
+}
+
+
+** 173p
+@Entity
+@SequenceGenerator(name="CONTACT_SEQ_GENERATOR", 
+  sequenceName="CONTACT_SEQ", initialValue=1, allocationSize=1)
+public class Contact {
+  @Id
+  @GeneratedValue(strategy=GenerationType. SEQUENCE, generator="CONTACT_SEQ_GENERATOR")
+  private int no;
+  ...... 
+}
+
+
+** 174p
+package com.multi.contactsapp.dao;
+......
+public interface ContactRepository extends JpaRepository<Contact, Long>{
+
+}
+
+
+** 175p
+package com.multi.contactsapp;
+......
+@RestController
+@RequestMapping(value="/contacts")
+public class ContactController {
+  @Autowired
+  private ContactRepository contactRepository;
+  
+  @GetMapping()
+  public List<Contact> getContactsAll() {
+    return contactRepository.findAll(Sort.by(Sort.Direction.DESC, "no"));
+  }
+  
+  @GetMapping("{no}")
+  public Optional<Contact> getContactOne(@PathVariable("no") long no) {
+    return contactRepository.findById(no);
+  }
+  
+  @PostMapping
+  public Contact insertContact(@RequestBody Contact c) {
+    return contactRepository.save(c);
+  }
+  
+  @PutMapping("{no}")
+  public Contact updateContact(@RequestBody Contact c, @PathVariable("no") long no) {
+    c.setNo(no);
+    return contactRepository.save(c);
+  }
+  
+  @DeleteMapping("{no}")
+  public void deleteContact(@PathVariable("no") long no) {
+    contactRepository.deleteById(no);
+  }
+}
+
+
+** 179p
+spring.data.rest.detection-strategy=annotated
+
+------
+
+package com.multi.contactsapp.dao;
+……
+@RepositoryRestResource(collectionResourceRel = "mydata", path = "contacts2")
+public interface ContactRepository extends JpaRepository<Contact, Long>{
+
+}
+
+
+
+** 181p
+package com.multi.contactsapp;
+......
+@Configuration
+public class SpringRestConfig implements RepositoryRestConfigurer {
+
+  @Override
+  public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
+     config.exposeIdsFor(Contact.class);
+  }
+}
+
+
+** 184p
+package com.multi.contactsapp.dao;
+......
+
+@RepositoryRestResource(collectionResourceRel = "mydata", path = "contacts2")
+public interface ContactRepository extends JpaRepository<Contact, Long>{
+  @RestResource(path = "findbyname", exported = true) 
+  List<Contact> findByNameContainingOrderByNameDesc(@Param("name") String name);
+}
+
+
+** 189p
+<dependency>
+  <groupId>org.springframework.data</groupId>
+  <artifactId>spring-data-rest-hal-explorer</artifactId>
+</dependency>
+
+
+** 190p
+<dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-hateoas</artifactId>
+</dependency>
+
+------
+@Entity
+public class Contact extends RepresentationModel<Contact>{
+  ......
+}
+
+------
+@GetMapping("{no}")
+public ResponseEntity<EntityModel<Contact>> getContactByNo(@PathVariable("no") long no) {
+     Contact contact = contactRepository.findById(no).get();
+     EntityModel<Contact> entityModel = EntityModel.of(contact);
+     WebMvcLinkBuilder linkTo = WebMvcLinkBuilder.linkTo(
+             WebMvcLinkBuilder.methodOn(this.getClass()).getContactByNo(no));
+     entityModel.add(linkTo.withSelfRel());
+     return ResponseEntity.ok(entityModel);
+}
+@GetMapping() 
+public ResponseEntity<CollectionModel<EntityModel<Contact>>> getContactsAll() {
+    List<EntityModel<Contact>> result = new ArrayList<>();
+    List<Contact> contacts = contactRepository.findAll();
+    for (final Contact contact : contacts) {
+        EntityModel<Contact> entityModel = EntityModel.of(contact);
+        Link selfLink = WebMvcLinkBuilder.linkTo(
+              WebMvcLinkBuilder.methodOn(this.getClass()).getContactByNo(contact.getNo())).withSelfRel();
+        result.add(entityModel.add(selfLink));
+    }
+    Link link = WebMvcLinkBuilder.linkTo(this.getClass()).withSelfRel();
+    return ResponseEntity.ok(CollectionModel.of(result, WebMvcLinkBuilder.linkTo(
+          WebMvcLinkBuilder.methodOn(this.getClass()).getContactsAll()).withSelfRel()));
+}
+
+
+** 193p
+  @GetMapping() 
+  public Page<Contact> getContactsAll(Pageable pageable) {
+      return contactRepository.findAll(pageable);
+  }
+
+
+** 195p
+package com.multi.contactsapp.dao;
+......
+@RepositoryRestResource(collectionResourceRel = "contacts", path = "contacts2")
+public interface ContactRepository extends JpaRepository<Contact, Long>{
+  //정렬만....
+  @RestResource(path = "findbytel", exported = true) 
+  List<Contact> findByTelStartingWith(@Param("tel") String tel, Sort sort);
+  //페이징과 정렬 모두
+  @RestResource(path = "findbyname", exported = true) 
+  Page<Contact> findByNameContaining(@Param("name") String name, Pageable pageable);
+}
+
+
+** 196p
+http://localhost:8080/contacts2/search/findbytel?tel=010-2121&sort=name,desc
+http://localhost:8080/contacts2/search/findbyname?name=연&page=0&size=2
+
+
+** 199p
+drop table contact;
+    
+create table contact (
+  no bigint generated by default as identity,
+  address varchar(255),
+  name varchar(255),
+  tel varchar(255),
+  primary key (no)
+);
+
+INSERT INTO contact (name, address, tel) VALUES ('쯔위', '서울', '010-2121-1211');
+INSERT INTO contact (name, address, tel) VALUES ('다연', '경기', '010-2121-1212');
+INSERT INTO contact (name, address, tel) VALUES ('정연', '서울', '010-2121-1213');
+INSERT INTO contact (name, address, tel) VALUES ('주이', '경기', '010-2121-1214');
+INSERT INTO contact (name, address, tel) VALUES ('사나', '전북', '010-2121-1215');
+INSERT INTO contact (name, address, tel) VALUES ('모모', '경남', '010-2121-1216');
+INSERT INTO contact (name, address, tel) VALUES ('태연', '경북', '010-2121-1217');
+INSERT INTO contact (name, address, tel) VALUES ('수영', '광주', '010-2121-1218');
+INSERT INTO contact (name, address, tel) VALUES ('혜영', '대구', '010-2121-1219');
+INSERT INTO contact (name, address, tel) VALUES ('소희', '강원', '010-2121-1220');
+INSERT INTO contact (name, address, tel) VALUES ('주니', '강원', '010-2121-1221');   
+ 
+DROP TABLE employee;
+DROP TABLE department;
+
+create table department (
+  dept_id varchar(255) not null,
+  dept_name varchar(255),
+  location varchar(255),
+  primary key (dept_id)
+);
+ 
+    
+create table employee (
+  emp_id varchar(255) not null,
+  emp_name varchar(255),
+  phone varchar(255),
+  dept_id varchar(255) not null,
+  primary key (emp_id)
+);
+    
+alter table employee 
+add constraint FKaqchbcb8i6nvtl9g6c72yba0p 
+foreign key (dept_id) references department;
+
+INSERT INTO department (dept_id, dept_name, location) VALUES ('D001', '총무부', '서울');
+INSERT INTO department (dept_id, dept_name, location) VALUES ('D002', '인사부', '서울');
+INSERT INTO department (dept_id, dept_name, location) VALUES ('D003', '영업부', '서울');
+
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E001', '홍길동', '010-2222-2221', 'D002');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E002', '이몽룡', '010-2222-2221', 'D002');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E003', '성춘향', '010-2222-2221', 'D003');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E004', '변학도', '010-2222-2221', 'D001');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E005', '박문수', '010-2222-2221', 'D003');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E006', '박명수', '010-2222-2221', 'D002');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E007', '박보영', '010-2222-2221', 'D003');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E008', '박보검', '010-2222-2221', 'D001');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E009', '이성룡', '010-2222-2221', 'D002');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E010', '문수인', '010-2222-2221', 'D003');
+INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E011', '송수연', '010-2222-2221', 'D002');
+
+
+** 200p
+package com.multi.contactsapp.domain;
+......
+@Entity
+public class Department {
+  @Id
+  @Column(name="DEPT_ID")
+  private String id;
+  private String deptName;
+  private String location;
+
+}
+
+------
+package com.multi.contactsapp.domain;
+......
+@Entity
+public class Employee {
+  @Id
+  @Column(name="EMP_ID")
+  private String id;
+  private String empName;
+  private String phone;
+  
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name="DEPT_ID", nullable = false)
+  private Department department;
+  
+}
+
+
+** 201p
+package com.multi.contactsapp.dao;
+......
+public interface DepartmentRepository  extends JpaRepository<Department, String> {
+
+}
+
+------
+package com.multi.contactsapp.dao;
+......
+public interface EmployeeRepository  extends JpaRepository<Employee, String> {
+    List<Employee> findByEmpNameStartingWith(String empName);
+}
+
+
+** 202p
+package com.multi.contactsapp;
+......
+@RestController
+@RequestMapping(value="depts")
+public class DepartmentController {	
+   @Autowired
+   private DepartmentRepository departmentRepository;   
+
+  @GetMapping("{deptid}") 
+  public Optional<Department> getDepartment(
+     @PathVariable("deptid") String deptid) {  
+     return departmentRepository.findById(deptid);
+  }
+}
+
+------
+package com.multi.contactsapp;
+......
+@RestController
+@RequestMapping(value="emps")
+public class EmployeeController {
+  @Autowired
+  private EmployeeRepository employeeRepository; 
+	
+  @GetMapping("find1/{name}") 
+   public List<Employee> getDepartment1(
+      @PathVariable("name") String name) {
+      return employeeRepository
+               .findByEmpNameStartingWith(name);  
+   }	
+}
+
+
+** 204p
+package com.multi.contactsapp.domain;
+......
+@Entity
+public class Department {
+  @Id
+  @Column(name = "DEPT_ID")
+  private String id;
+  private String deptName;
+  private String location;
+  
+  @OneToMany(mappedBy = "department", fetch = FetchType.EAGER)
+  private List<Employee> employees = new ArrayList<Employee>();  
+  
+  //employees 필드에 대한 setter,getter도 추가해야 함.
+}
+
+
+** 206p
+@Entity
+@JsonInclude(Include.NON_NULL)
+public class Employee {
+  ...... 
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name="DEPT_ID", nullable = false)
+  private Department department;
+  ......
+}
+
+
+** 207p
+  @GetMapping("find2/{name}") 
+  public List<Employee> getDepartment2(
+    @PathVariable("name") String name) {
+    List<Employee> employeeList = employeeRepository.findByEmpNameStartingWith(name); 
+    if (employeeList.size() > 0) {
+      for (Employee e : employeeList) {
+        e.getDepartment().setEmployees(null);
+      }
+    }
+    return employeeList;
+  }
+
+------
+  @GetMapping("{deptid}") 
+  public Optional<Department> getDepartment(@PathVariable("deptid") String deptid) {
+    Optional<Department> optDept = departmentRepository.findById(deptid);
+    if (optDept.isPresent()) {
+      Department dept = optDept.get();
+      for (int i=0; i < dept.getEmployees().size(); i++) {
+        dept.getEmployees().get(i).setDepartment(null);
+      }
+    }
+    return optDept;
+  }
+
+
+** 210p
+  @Query("select e from Employee e " + 
+      " left join fetch e.department d " + 
+      " where e.empName like :name%")
+  List<Employee> queryEmpByFetchJoin(String name);
+
+  @Query("select e.id, e.empName, e.phone, d.id, d.deptName, d.location from Employee e " + 
+      "join e.department d " + 
+      "where e.empName like :name%")
+  List<Object[]> queryEmpsByJPQL(String name);
+
+
+** 211p
+@GetMapping("find3/{name}") 
+public List<Employee> getDepartment3(@PathVariable("name") String name) {
+  List<Employee> list = employeeRepository.queryEmpByFetchJoin(name);
+  if (list.size() > 0) {
+    for (Employee e : list) {
+      e.getDepartment().setEmployees(null);
+    }
+  }
+  return list;
+}
+
+@GetMapping("find4/{name}") 
+public List<Employee> getDepartment4(@PathVariable("name") String name) {
+  List<Object[]> list = employeeRepository.queryEmpsByJPQL(name);
+  List<Employee> empList = new ArrayList<Employee>();
+  if (list.size() > 0) {
+    for (Object[] objs : list) {
+      Employee e = new Employee((String)objs[0], (String)objs[1], (String)objs[2]);
+      e.setDepartment(new Department((String)objs[3], (String)objs[4], (String)objs[5]));
+      e.getDepartment().setEmployees(null);
+      empList.add(e);
+    }
+  }
+  return empList;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

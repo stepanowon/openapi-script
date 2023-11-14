@@ -1,0 +1,673 @@
+** 397p
+package com.opensg.oauth2.client;
+
+public class Settings {
+  public static final String CLIENT_ID = 
+             "[발급받은 client_id]";
+  public static final String CLIENT_SECRET = 
+             "[발급받은 client_secret]";
+  public static final String AUTHORIZE_URL=
+             "https://bitly.com/oauth/authorize";
+  public static final String ACCES_TOKEN_URL = 
+             "https://api-ssl.bitly.com/oauth/access_token";
+  public static final String REDIRECT_URI = 
+             "http://jcornor.com:8000/callback";
+  public static final String SHORTEN_API_URL = 
+             "https://api-ssl.bitly.com/v4/shorten";
+}
+
+
+** 398p
+package com.multi.bitlyclient;
+......
+@Controller
+@RequestMapping(value = "/")
+public class IndexController {
+
+  @GetMapping
+  public String requestIndex(Model model) {
+    HashMap<String, String> map = new HashMap<String, String>();
+    map.put("client_id", Settings.CLIENT_ID);
+    map.put("redirect_uri", Settings.REDIRECT_URI);
+    map.put("response_type", "code");
+    String url = Settings.AUTHORIZE_URL + "?" + OAuth2ClientUtil.getParamStringFromMap(map);
+    model.addAttribute("url", url);
+    return "index";
+  }
+}
+
+------
+[ src/main/resources/templates/index.html 파일 ]
+
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>bitly Oauth 2.0 client Test</title>
+</head>
+<body>
+  <a th:href="@{${url}}">bitly 앱 승인 페이지로 이동</a>
+  <br /><br /><br />
+  <p>반드시 http://jcornor.com:8000 로 실행하세요.</p>
+</body>
+</html>
+
+
+** 400p
+package com.multi.bitlyclient;
+......
+@Controller
+@RequestMapping(value="/callback")
+public class CallbackController {
+  
+  @GetMapping()
+  public String requestCallback(HttpSession session, Model model, 
+      @RequestParam(value = "code") String code)
+      throws ClientProtocolException, IOException {
+    HttpPost httpPost = new HttpPost(Settings.ACCES_TOKEN_URL);
+
+    ArrayList<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+    nameValuePairs.add(new BasicNameValuePair("client_id", Settings.CLIENT_ID));
+    nameValuePairs.add(new BasicNameValuePair("client_secret", Settings.CLIENT_SECRET));
+    nameValuePairs.add(new BasicNameValuePair("redirect_uri", Settings.REDIRECT_URI));
+    nameValuePairs.add(new BasicNameValuePair("grant_type", "authorization_code"));
+    nameValuePairs.add(new BasicNameValuePair("code", code));
+    httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs, StandardCharsets.UTF_8));
+    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+    CloseableHttpResponse response = httpClient.execute(httpPost);
+
+    String body = "";
+
+    if (response.getStatusLine().getStatusCode() == 200) {
+      ResponseHandler<String> handler = new BasicResponseHandler();
+      body = handler.handleResponse(response);
+        HashMap<String,String> tokenMap = OAuth2ClientUtil.getMapFromParamString(body);
+        session.setAttribute("access_token", tokenMap.get("access_token"));
+        return "redirect:/main";
+    } else {
+      model.addAttribute("message", "인증실패");
+      model.addAttribute("body", body);
+    }
+    return "error";
+  }
+}
+
+
+** 402p
+package com.multi.bitlyclient;
+……
+@Controller
+@RequestMapping(value="/main")
+public class MainController {
+  @GetMapping()
+  public String requestMain(HttpSession session) {
+    if (session.getAttribute("access_token") == null) 
+      return "redirect:/";
+    return "main";
+  }
+}
+
+//  src/main/resources/templates/main.html 페이지도 함께 검토하세요.
+
+
+
+** 403p
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Quicksand" />
+	<link rel="stylesheet" type="text/css" href="css/pretty-json.css" />
+	<title>URL 단축 테스트</title>
+</head>
+
+<body>
+	긴 URL : <input type="text" id="long" value="" /><br />
+	<button id="shorten">URL 짧게!!</button>
+	<hr />
+	짧은 URL : <span id="short"></span><br />
+	수신 데이터 : <br />
+	<div style="border: solid 1px gray;" id="json">
+		&nbsp;
+	</div>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/underscore-min.js"></script>
+	<script type="text/javascript" src="js/backbone-min.js"></script>
+	<script type="text/javascript" src="js/pretty-json-min.js"></script>
+	<script type="text/javascript">
+		var param = {longUrl: ""};
+		$("#shorten").click(function () {
+			param.long_url = $("#long").val();
+			$.get("shorten", param, function (response) {
+				var node = new PrettyJSON.view.Node({
+					el: $("#json"),
+					data: response
+				});
+				console.log(response);
+				$("#short").html(response.link);
+			});
+		})
+	</script>
+</body>
+</html>
+
+
+** 404p
+package com.multi.bitlyclient;
+......
+@Controller
+@RequestMapping(value = "/shorten")
+public class ShortenController {
+  
+  @GetMapping()
+  public void requestMain(HttpSession session, HttpServletResponse res, 
+      @RequestParam(value = "long_url") String long_url) throws Exception {
+    if (session.getAttribute("access_token") == null) {
+      throw new Exception("access_token is null");
+    }
+    String access_token = (String) session.getAttribute("access_token");
+    String bearerToken = OAuth2ClientUtil.generateBearerTokenHeaderString(access_token);
+
+    HttpPost httpPost = new HttpPost(Settings.SHORTEN_API_URL);
+    httpPost.setHeader("Authorization", bearerToken);
+    httpPost.setHeader("Content-type", "application/json");
+    httpPost.setHeader("Accept", "application/json");
+    String json = "{ \"long_url\" : \"" + long_url + "\" } ";
+    HttpEntity postEntity = new StringEntity(json, "UTF-8");
+    httpPost.setEntity(postEntity);
+
+    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+    CloseableHttpResponse response = httpClient.execute(httpPost);
+
+    String result = "";
+    if (response.getStatusLine().getStatusCode() == 200) {
+      ResponseHandler<String> handler = new BasicResponseHandler();
+      result = handler.handleResponse(response);
+      System.out.println(result);
+    } else {
+      result = "{ \"status\" : \"오류 발생 : " + response.getStatusLine().getStatusCode() + "\" }";
+    }
+    res.setContentType("application/json");
+    res.getWriter().print(result);
+    res.getWriter().close();
+  }
+}
+
+
+** 412p
+server.port=80
+
+#data source settings
+spring.datasource.url=jdbc:h2:tcp://localhost/~/test
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
+
+------
+keytool -genkeypair -alias oauth2-sample -keyalg RSA -keystore oauth2-sample.pfx -storetype PKCS12
+
+
+
+** 413p 
+DROP TABLE oauth2_authorization;
+DROP TABLE oauth2_registered_client;
+DROP TABLE oauth2_authorization_consent;
+DROP TABLE authorities;
+DROP TABLE users;
+
+CREATE TABLE oauth2_authorization_consent (
+    registered_client_id varchar(100) NOT NULL,
+    principal_name varchar(200) NOT NULL,
+    authorities varchar(1000) NOT NULL,
+    PRIMARY KEY (registered_client_id, principal_name)
+);
+
+CREATE TABLE oauth2_registered_client (
+    id varchar(100) NOT NULL,
+    client_id varchar(100) NOT NULL,
+    client_id_issued_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    client_secret varchar(200) DEFAULT NULL,
+    client_secret_expires_at timestamp DEFAULT NULL,
+    client_name varchar(200) NOT NULL,
+    client_authentication_methods varchar(1000) NOT NULL,
+    authorization_grant_types varchar(1000) NOT NULL,
+    redirect_uris varchar(1000) DEFAULT NULL,
+    post_logout_redirect_uris varchar(1000) DEFAULT NULL,
+    scopes varchar(1000) NOT NULL,
+    client_settings varchar(2000) NOT NULL,
+    token_settings varchar(2000) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE oauth2_authorization (
+    id varchar(100) NOT NULL,
+    registered_client_id varchar(100) NOT NULL,
+    principal_name varchar(200) NOT NULL,
+    authorization_grant_type varchar(100) NOT NULL,
+    authorized_scopes varchar(1000) DEFAULT NULL,
+    attributes blob DEFAULT NULL,
+    state varchar(500) DEFAULT NULL,
+    authorization_code_value blob DEFAULT NULL,
+    authorization_code_issued_at timestamp DEFAULT NULL,
+    authorization_code_expires_at timestamp DEFAULT NULL,
+    authorization_code_metadata blob DEFAULT NULL,
+    access_token_value blob DEFAULT NULL,
+    access_token_issued_at timestamp DEFAULT NULL,
+    access_token_expires_at timestamp DEFAULT NULL,
+    access_token_metadata blob DEFAULT NULL,
+    access_token_type varchar(100) DEFAULT NULL,
+    access_token_scopes varchar(1000) DEFAULT NULL,
+    oidc_id_token_value blob DEFAULT NULL,
+    oidc_id_token_issued_at timestamp DEFAULT NULL,
+    oidc_id_token_expires_at timestamp DEFAULT NULL,
+    oidc_id_token_metadata blob DEFAULT NULL,
+    refresh_token_value blob DEFAULT NULL,
+    refresh_token_issued_at timestamp DEFAULT NULL,
+    refresh_token_expires_at timestamp DEFAULT NULL,
+    refresh_token_metadata blob DEFAULT NULL,
+    user_code_value blob DEFAULT NULL,
+    user_code_issued_at timestamp DEFAULT NULL,
+    user_code_expires_at timestamp DEFAULT NULL,
+    user_code_metadata blob DEFAULT NULL,
+    device_code_value blob DEFAULT NULL,
+    device_code_issued_at timestamp DEFAULT NULL,
+    device_code_expires_at timestamp DEFAULT NULL,
+    device_code_metadata blob DEFAULT NULL,
+    PRIMARY KEY (id)
+);
+
+
+CREATE TABLE users (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(200) DEFAULT NULL,
+    enabled BOOLEAN NOT NULL,
+    acc_locked BOOLEAN NULL,
+    acc_expired BOOLEAN NULL,
+    creds_expired BOOLEAN NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE authorities (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL,
+    authority VARCHAR(200) NOT NULL,
+    PRIMARY KEY (id)
+);
+
+
+
+** 414p
+
+package com.multi.oauth20server;
+
+......(import 문 생략)
+
+@Configuration
+@EnableWebSecurity
+public class SpringSecurityConfig {
+
+  // application.properies의 Data Source 설정을 사용하기 위함 멤버필드
+  private final DataSource dataSource;
+
+  // 생성자를 이용해 Data Source 의존성 주입
+  public SpringSecurityConfig(DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
+  
+  // 사용자 password를 일방향 암호화하기 위한 Bean 설정
+  @Bean
+   PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  /**
+  * * oauth 인증과정중 사용자 로그인을 위한 jdbc를 이용 사용자 서비스
+  *   - data source를 사용하는 jdbcUserDetailsMananer Bean을 리턴하면 됨
+  *   - try~catch 문의 코드는 다른 Bean을 이용해 사용자를 등록할 때 사용하면 됨
+  */
+  @Bean
+  UserDetailsService users() {
+    JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+    // @formatter:off
+    try {
+      jdbcUserDetailsManager.loadUserByUsername("user1");
+    } catch (UsernameNotFoundException ex) {
+      PasswordEncoder encoder = new BCryptPasswordEncoder();
+      UserDetails user = 
+          User.withUsername("user1")
+            .passwordEncoder(encoder::encode).password("1234")
+            .roles("USER").build();
+      jdbcUserDetailsManager.createUser(user);
+    }
+    // @formatter:on
+    return jdbcUserDetailsManager;
+  }
+
+//  만일 InMemoryUserDetailsManager 를 이용하고 싶다면 아래 코드를 사용함
+//  @Bean
+//  UserDetailsService users() {
+//    UserDetails user1 = 
+//         User.withDefaultPasswordEncoder().username("user1").password("1234").roles("USERS").build();
+//    UserDetails user2 =  
+//         User.withDefaultPasswordEncoder().username("user2").password("1234").roles("USERS").build();
+//    UserDetails admin = 
+//        User.withDefaultPasswordEncoder().username("admin").password("1234").roles("ADMINS").build();
+//
+//    return new InMemoryUserDetailsManager(user1, user2, admin);
+//  }
+
+  // 1. 사용자 인증을 위한 UserDetailsService를 이용하도록 설정
+  // 2. Password 인코더로 BCryptPasswordEncoder 사용
+  @Bean
+  DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
+    DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
+    auth.setUserDetailsService(userDetailsService);
+    auth.setPasswordEncoder(passwordEncoder());
+    return auth;
+  }
+
+  /**
+   *  * 보안 설정
+   *    - AuthorizationServerConfiguration에서 기본 보안설정을 적용할 것이므로
+   *      여기서는 모든 요청에 대해 인증을 요구하는 것으로 설정해도 됨
+   *    - FormLogin을 Default로 설정
+   */
+   @Bean
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        // @formatter:off
+        http
+            .authorizeHttpRequests(authorize ->
+              authorize.anyRequest().authenticated()
+            )
+            .formLogin(Customizer.withDefaults());
+        return http.build();
+        // @formatter:on
+    }
+}
+
+
+** 418p
+package com.multi.oauth20server;
+......(import문 생략)
+
+@Configuration
+public class AuthorizationServerConfig {
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  /**
+   *  * AuthorizationServer 보안 필터 적용
+   *    - SpringSecurityConfig의 defaultSecurityFilterChain Bean보다 로드 우선순위를 높여야 함
+   *    - OAuth2.0 기본 보안 설정 적용
+   *    - oidc debugger를 이용할 수 있도록 설정 추가
+   *    - 사용자 인증은 formLoing을 이용하도록 설정함
+   */
+  @Bean
+  @Order(Ordered.HIGHEST_PRECEDENCE)
+  SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+    return http.formLogin(Customizer.withDefaults()).build();
+  }
+
+  /**
+   * * Json Web Key 셋을 생성함. 
+   *   - JWT의 서명을 생성할 때는 Private Key 사용, 서명 검증시에는 Public Key 사용
+   *   - 리소스 서버로 Public Key를 전달하기 위해 JWK 설정이 필요함
+   *   - https://www.baeldung.com/spring-security-oauth2-jws-jwk
+   */
+  private JWKSet buildJWKSet() throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
+      FileNotFoundException, IOException {
+    KeyStore keyStore = KeyStore.getInstance("pkcs12");
+    try (FileInputStream fis = new FileInputStream("src/main/resources/oauth2-sample.pfx")) {
+      keyStore.load(fis, "123456".toCharArray());
+      return JWKSet.load(keyStore, new PasswordLookup() {
+        @Override
+        public char[] lookupPassword(String name) {
+          return "123456".toCharArray();
+        }
+      });
+    }
+  }
+
+  // 보안 컨텍스트에서 사용하는 JWKSource를 생성
+  // 앞에서의 buildJWKSet() 메서드의 리턴값을 JWKSet으로 설정함
+  @Bean
+  JWKSource<SecurityContext> jwkSource() throws NoSuchAlgorithmException, KeyStoreException, CertificateException,
+      FileNotFoundException, IOException {
+    JWKSet jwkSet = buildJWKSet();
+    return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+  }
+
+  // JWT 디코더로 jwkSource 지정
+  @Bean
+  JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+  }
+
+  // JWT 토큰 발급자를 지정함
+  @Bean
+  AuthorizationServerSettings providerSettings() {
+    return AuthorizationServerSettings.builder().issuer("http://tfactory.com").build();
+  }
+
+ // JWT 토큰 설정 : AT 유효 기간(60분),  RT 유효 기간(30일), RT 사용
+  @Bean
+  TokenSettings tokenSettings() {
+    return TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(60))
+        .refreshTokenTimeToLive(Duration.ofDays(30)).reuseRefreshTokens(true).build();
+  }
+
+  // 사용자가 Client 앱을 승인하기 위해 승인 페이지(Consent Page)를 띄우도록 설정. 묵시적 승인(X)
+  @Bean
+  ClientSettings clientSettings() {
+    return ClientSettings.builder().requireAuthorizationConsent(true).build();
+  }
+
+    /**
+     * * 클라이언트 앱 정보를 jdbc로 조회하도록 설정
+     *  - 별도의 서비스, 컨트롤러를 이용해 앱을 등록하는 화면을 만들 수 있음
+     *     registeredClient -> jdbcRegisteredClientRepository.save(registeredClient);
+     */
+  @Bean
+  RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+    JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
+    RegisteredClient client1 = jdbcRegisteredClientRepository.findByClientId("client1");
+    if (client1 == null) {
+      RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        .clientId("client1").clientSecret(passwordEncoder().encode("1234")).clientSettings(clientSettings())
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
+        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+        .redirectUri("https://oidcdebugger.com/debug")
+        .redirectUri("http://jcornor.com:8000/callback")
+        .redirectUri("https://oauth.pstmn.io/v1/callback")
+        .scope(OidcScopes.OPENID).scope("profiles").scope("contacts").scope("messages")
+        .tokenSettings(tokenSettings()).build();
+      jdbcRegisteredClientRepository.save(registeredClient);
+    }
+    JdbcRegisteredClientRepository.RegisteredClientParametersMapper registeredClientParametersMapper = 
+          new JdbcRegisteredClientRepository.RegisteredClientParametersMapper();
+    jdbcRegisteredClientRepository.setRegisteredClientParametersMapper(registeredClientParametersMapper);
+
+    return jdbcRegisteredClientRepository;
+  }
+
+  // jdbc client repository를 AuthorizationService에 설정함
+  @Bean
+  OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate,
+      RegisteredClientRepository registeredClientRepository) {
+    return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+  }
+
+  // 사용자가 client 앱을 승인(Consent)한 정보를 jdbc로 테이블에 저장
+  @Bean
+  OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate,
+      RegisteredClientRepository registeredClientRepository) {
+    return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+  }
+}
+
+
+
+** 430p
+#server settings
+server.port=8000
+
+#data source settings
+spring.datasource.url=jdbc:h2:tcp://localhost/~/test
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
+
+#JPA settings
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+
+
+** 431p
+package com.multi.oauth20server.domain;
+......
+
+@Entity
+public class Contact {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private long no;
+  private String name;
+  private String tel;
+  private String address;
+
+  //생성자, Getter, Setter 자동 생성할 것
+}
+
+
+** 432p
+package com.multi.oauth20server.dao;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.multi.oauth20server.domain.Contact;
+
+public interface ContactRepository extends JpaRepository<Contact, Long>{
+}
+
+
+
+** 433p
+package com.multi.oauth20server;
+......
+@RestController
+@RequestMapping(value="/api")
+public class ContactController {  
+  @Autowired
+  ContactRepository contactRepository;
+
+  @GetMapping(value="/contacts", produces = {"application/json"})
+  public List<Contact> getContactList() {
+    return contactRepository.findAll();
+  }
+  
+  @GetMapping(value="/profiles", produces = {"application/json"})
+  public HashMap<String, String> getProfile() {
+    HashMap<String,String> profile = new HashMap<String, String>();
+    profile.put("system", "OAuth 2.0 Resource Server");
+    profile.put("devenv", "Spring Boot 3.x");
+    return profile;
+  }
+}
+
+
+** 435p
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>  
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
+
+------
+……
+# Disable Servlet Context for H2 DB
+spring.h2.console.enabled=false
+
+# JWT Issuer Setting
+spring.security.oauth2.resourceserver.jwt.issuer-uri=http://tfactory.com
+
+
+** 436p
+package com.multi.oauth20server;
+......
+
+@EnableWebSecurity
+@Configuration
+public class ResourceSecurityConfig {
+  
+  // 권한 검증 하지 않을 경로 지정
+  @Bean
+  WebSecurityCustomizer webSecurityCustomizer() {
+    return (web) -> web.ignoring().requestMatchers("/webjars/**", "/assets/**");
+  }
+ 
+  /**
+   * * 권한 적용
+   *  - Swagger 관련 경로는 모두 허용
+   *  - /api/contacts : contacts SCOPE가 있어야 함
+   *  - /api/profiles : profiles SCOPE가 있어야 함
+   * * OAuth2 Resource Server에 JWT 적용
+   */
+  @Bean
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {  
+    http.csrf(Customizer.withDefaults())
+        .authorizeHttpRequests((authz) -> authz
+          .requestMatchers("/swagger/**").permitAll()
+          .requestMatchers("/swagger-ui/**").permitAll()
+          .requestMatchers("/api/contacts").hasAuthority("SCOPE_contacts")
+          .requestMatchers("/api/profiles").hasAuthority("SCOPE_profiles")
+            .anyRequest().authenticated()
+        )
+        .oauth2ResourceServer(oauth2 -> oauth2
+            .jwt(Customizer.withDefaults())
+        );         
+    return http.build();
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

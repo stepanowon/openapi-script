@@ -1,0 +1,361 @@
+** 218p
+<dependency>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>4.5.14</version>
+</dependency>
+
+
+** 219p
+package httpclienttest;
+......
+public class Sample1 {
+
+  public static void main(String[] args) throws ClientProtocolException, IOException {
+      HttpGet httpGet = new HttpGet("http://localhost:8080/contacts");
+      httpGet.setHeader("Accept", "application/json");
+
+      CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+      CloseableHttpResponse response = httpClient.execute(httpGet);
+
+      if (response.getStatusLine().getStatusCode() == 200) {
+          ResponseHandler<String> handler = new BasicResponseHandler();
+          String body = handler.handleResponse(response);
+          System.out.println(body);
+      } else {
+          System.out.println("상태코드 : " + response.getStatusLine().getStatusCode());
+      }
+  }
+
+}
+
+
+** 220p
+package httpclienttest;
+......
+public class Sample2 {
+  public static void main(String[] args) throws ClientProtocolException, IOException {
+    HttpPost httpPost = new HttpPost("http://localhost:8080/contacts");
+    httpPost.setHeader("Accept", "application/json");
+    httpPost.setHeader("Content-Type", "application/json; charset=UTF-8");
+    
+    String json = "{ \"name\":\"모모\", \"tel\":\"010-1111-1111\", \"address\":\"서울\" } ";
+    HttpEntity postEntity = new StringEntity(json, "UTF-8");
+    httpPost.setEntity(postEntity);
+    
+    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+    CloseableHttpResponse response = httpClient.execute(httpPost);
+    
+    if (response.getStatusLine().getStatusCode() == 200) {
+      ResponseHandler<String> handler = new BasicResponseHandler();
+      String body = handler.handleResponse(response);
+      System.out.println(body);
+    } else {
+      System.out.println("상태코드 : " + response.getStatusLine().getStatusCode());
+    }
+  }
+}
+
+
+** 238p
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Insert title here</title>
+  <style>
+    table.mytable { width:500px; }
+    table.mytable > thead {   background-color: aqua; }
+    table.mytable > tbody  td { border-bottom: solid 1px gray; padding:3px 10px 3px 10px; }
+    div.myinput { padding-bottom: 3px; }
+    div.box { padding: 20px; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="box">
+      <form id="f1" method="post" action="add.do">
+          <div class="myinput">번호 : <input type="text" id="no" name="no" /></div>
+          <div class="myinput">이름 : <input type="text" id="name" name="name" /></div>
+          <div class="myinput">전화 : <input type="text" id="tel" name="tel" /></div>
+          <div class="myinput">주소 : <input type="text" id="address" name="address" /></div>
+      </form> 
+      <button id="add">추가</button><button id="update">수정</button>
+    </div>
+    <div  style="margin:10px 10px 10px 10px; ">
+      <table class="mytable">
+        <thead>
+          <tr><th>번호</th><th>성명</th><th>전화</th><th>주소</th></tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://code.jquery.com/jquery.js"></script>
+  <script type="text/javascript">
+    var BASEURL = "/contacts";
+    function viewContactList () {
+      $("#list").empty();
+      $.ajax({ 
+          type:"GET", url:BASEURL, dataType:"json", contentType:"application/json" 
+      }).done(function(data) {
+        var str = "";
+        for (var i=0; i < data.contacts.length; i++) {
+          var c = data.contacts[i];
+          str += "<tr>";
+          str += "<td>" + c.no + "</td>";
+          str += "<td>" + c.name + "</td>";
+          str += "<td>" + c.tel + "</td>";
+          str += "<td>" + c.address + "</td>";
+          str += "</tr>";
+        }
+        $("#list").append(str);
+      })
+    }
+    $("#update").click(function() {
+        var param = {};
+        param.name = $("#name").val();
+        param.tel = $("#tel").val();
+        param.address = $("#address").val();
+        var url = BASEURL + "/" + $("#no").val();
+        $.ajax({
+          type:"PUT", url:url, data:JSON.stringify(param), contentType:"application/json"
+        }).done(function(data) {
+          if (data.status=="ok") {
+            viewContactList();
+            $("#f1")[0].reset();
+          } else {
+            alert("연락처 수정중  오류 발생 : " + data.message);
+          }
+        })
+    })
+    $("#add").click(function() {
+      var param = {};
+      param.name = $("#name").val();
+      param.tel = $("#tel").val();
+      param.address = $("#address").val();
+      
+      $.ajax({ 
+        type:"POST", url:BASEURL, data:JSON.stringify(param), contentType:"application/json"
+      }).done(function(data) {
+        if (data.status=="ok") {
+          viewContactList();
+          $("#f1")[0].reset();
+        } else {
+          alert("연락처 추가중  오류 발생 : " + data.message);
+        }
+      })
+    })
+    
+    viewContactList();
+  </script>
+</body>
+</html>
+
+
+** 251p
+<dependency>
+   <groupId>org.springframework.cloud</groupId>
+   <artifactId>spring-cloud-starter-gateway</artifactId>
+   <version>4.0.7</version>
+</dependency>
+
+https://mageddo.com/tools/yaml-converter
+
+
+** 252p
+server:
+  port: 8000
+
+spring:
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+      - id: rewritepath_route
+        uri: http://tfactory.com:8080
+        predicates:
+        - Path=/api/**
+        filters:
+        - RewritePath=/api/?(?<segment>.*), /$\{segment}
+
+
+
+** 258p
+package com.multi.contactsapp.filter;
+......
+
+@Component
+public class JsonpFilter implements Filter {
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+    String callback = null;
+    String method = null;
+
+    if (request instanceof HttpServletRequest) {
+      HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+      callback = httpServletRequest.getParameter("callback");
+      method = httpServletRequest.getMethod().toLowerCase();
+    }
+    if (method.equals("get") && callback != null) {
+      OutputStream out = response.getOutputStream();
+      out.write(String.format("/**/ %s(", callback).getBytes());
+      chain.doFilter(request, response);
+      out.write(new JsonpResponseWrapper((HttpServletResponse) response).getData());
+      out.write(")".getBytes());
+      out.close();
+    } else {
+      chain.doFilter(request, response);
+    }
+  }
+
+  private static class JsonpResponseWrapper extends HttpServletResponseWrapper {
+    private JsonpResponseWrapper(HttpServletResponse response) {
+      super(response);
+    }
+
+    private byte[] getData() {
+      return new ByteArrayOutputStream().toByteArray();
+    }
+  }
+}
+
+
+** 261p
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>jsonp1</title>
+</head>
+<body>
+  <div id="container">
+    <h2>console을 확인하세요</h2>
+  </div>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script type="text/javascript">
+    function test(data) {
+      console.log("## jsonp 개념 이해")
+      console.log(data);
+    }
+  </script> 
+  <script type="text/javascript" src="http://tfactory.com:8080/contacts?output=json&callback=test"></script>
+</body>
+</html>
+
+
+** 262p
+……
+<body>
+  <div id="container">
+    <h2>console을 확인하세요</h2>
+  </div>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script type="text/javascript">
+     $.ajax({
+       type: "get",
+       url : "http://tfactory.com:8080/contacts",
+       data : { pageno:1, output:"json" },
+       dataType:"jsonp",
+       jsonp : "callback",
+     })
+     .done(function(data) {
+       console.log("## $.ajax()를 이용한 jsonp 요청");
+       console.log(data);
+     })
+  </script>
+</body>
+</html>
+
+
+** 269p
+@CrossOrigin(origins={ "http://jcornor.com:8000" })
+@RequestMapping(method = RequestMethod.GET)
+public ContactList getContactList() {
+   return contactService.getContactList();
+}
+
+------
+@CrossOrigin(origins={ "http://jcornor.com:8000" })
+@RestController
+@RequestMapping(value="contacts")
+public class ContactRestController {
+   @Autowired
+   private ContactService contactService;
+   @RequestMapping(method = RequestMethod.GET)
+   public ContactList getContactList() {
+      return contactService.getContactList();
+   }
+}
+
+
+** 270p
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**");
+    }
+}
+
+------
+@Override
+public void addCorsMappings(CorsRegistry registry) {
+   registry.addMapping("/contacts/**")
+      .allowedOrigins("http://client:8000","http://jcornor.com:8000")
+      .allowedMethods("GET","POST","PUT","DELETE","HEAD", "OPTIONS")
+      .allowCredentials(true)
+      .maxAge(3600);
+}
+
+
+** 271p
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Insert title here</title>
+<script type="text/javascript" src="https://code.jquery.com/jquery.js"></script>
+<script type="text/javascript">
+$(function() {
+   var url = "http://tfactory.com:8080/contacts?output=json";
+   $.get(url, function(data) {
+      console.log(data);
+   })
+})
+</script>
+</head>
+<body>
+   <h2>Console Log를 확인합니다.</h2>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

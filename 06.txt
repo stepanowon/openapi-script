@@ -1,0 +1,245 @@
+** 278p
+DROP TABLE tbl_apiKey;
+
+create table tbl_apikey 
+(
+ apiKey varchar2(200) NOT NULL,
+ hostName varchar2(200) NOT NULL, 
+ count number default 0,
+ regdate date default current_date,
+ updateDate date default current_date
+);
+
+alter table tbl_apikey add constraint pk_apikey  primary key (apiKey);
+
+
+** 279p
+package com.multi.contactsapp.openapi;
+
+......
+public class ApiKeyVO implements Serializable{
+    private static final long serialVersionUID = 1L;
+	
+    private String hostName;
+    private String apiKey;
+    private int count;
+    ......
+}
+
+
+** 280p
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper 
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="apiKey">
+   <select id="select" resultType="org.thinker.openapi.ApiKeyVO">
+      SELECT hostName, apiKey, count 
+      FROM tbl_apikey 
+      WHERE apiKey = #{apiKey}
+   </select>
+   <insert id="insert" parameterType="org.thinker.openapi.ApiKeyVO">
+        INSERT INTO tbl_apikey (hostName, apiKey) values (#{hostName}, #{apiKey})
+   </insert>
+   <update id="updateCnt">
+       UPDATE tbl_apiKey SET count = count+ 1 WHERE apiKey = #{apiKey}
+   </update>
+</mapper> 
+
+
+** 281p
+package com.multi.contactsapp.openapi;
+
+......
+@Repository("ApiKeyRepository")
+public class ApiKeyRepositoryImpl implements ApiKeyRepository {
+  @Autowired
+  private SqlSession sqlSession;
+  @Override
+  public void create(ApiKeyVO vo)throws ApiKeyException{
+     sqlSession.insert("apiKey.insert", vo );   
+  }
+  @Override
+  public ApiKeyVO read(String apiKey) throws ApiKeyException{
+    return sqlSession.selectOne("apiKey.select",apiKey);
+  }
+  @Override
+  public void update(String apiKey) throws ApiKeyException {
+    sqlSession.update("apiKey.updateCnt",apiKey);    
+  }
+}
+
+
+** 282p
+public String requestNewAPIKey(ApiKeyVO apiKeyVO) throws Exception {
+
+  String apiKey = DigestUtils.md5DigestAsHex(UUID.randomUUID().toString().getBytes());    
+  apiKeyVO.setApiKey(apiKey);
+  try {
+    repository.create(apiKeyVO);
+  } catch (Exception e) {
+    throw new ApiKeyException("이미 등록된 api key입니다. ");
+  }
+  return apiKey;
+
+}
+
+
+** 283p
+public void checkApiKey(String hostname, String apiKey) throws ApiKeyException {
+   ApiKeyVO vo = repository.read(apiKey);
+   if (vo == null) {
+      throw new ApiKeyException("등록되지 않은 apikey입니다.");
+   }
+   if (hostname == null || hostname.equals(vo.getHostName()) == false) {
+      throw new ApiKeyException("등록되지 않은 origin(호스트명)입니다.");
+   }
+   if (vo.getCount() >= maxCount) {
+      throw new ApiKeyException("최대 요청 수를 초과했습니다.");
+   }
+   repository.update(apiKey); // 사용 카운트 1증가
+}
+
+
+** 284p
+package com.multi.contactsapp;
+......
+
+@Controller
+public class KeyProcessController {
+  
+  @Autowired
+  private ApiKeyProcessor keyProcessor;
+  
+  @GetMapping("/apikey/request")
+  public void getForm(){    
+  }
+  
+  @PostMapping("/apikey/makekey")
+  public void makeApiKey(ApiKeyVO apiKeyVO, Model model)throws Exception{
+    String keyValue = keyProcessor.requestNewAPIKey(apiKeyVO);
+    model.addAttribute("apikey", keyValue); 
+  }
+}
+
+
+** 286p
+package com.multi.contactsapp.openapi;
+......
+@Component
+public class ApiKeyInterceptor 
+    implements HandlerInterceptor {
+
+  @Autowired()
+  private ApiKeyProcessor keyService;
+  
+  @Override
+  public boolean preHandle(
+     HttpServletRequest request, 
+     HttpServletResponse response, Object handler)
+        throws Exception {
+      String origin = (String)request.getHeader("Origin");
+      String apiKey = request.getParameter("key");
+      keyService.checkApiKey(origin, apiKey);
+      return true;
+  }
+}
+
+------
+package com.multi.contactsapp;
+......
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+  @Autowired
+  ApiKeyInterceptor interceptor; 
+  
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(interceptor)
+                .addPathPatterns("/contacts/**");
+    }
+}
+
+
+** 287p
+package com.multi.contactsapp.util;
+......
+
+@ControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+  @ExceptionHandler(value={ ApiKeyException.class })
+  @ResponseBody
+  public ResponseEntity<ApiErrorInfo> handleApiKeyException(ApiKeyException e) {
+    ApiErrorInfo error = new ApiErrorInfo("API Key 처리 오류 : " + e.getMessage(), e.getStatus());
+    ResponseEntity<ApiErrorInfo> entity = 
+        new ResponseEntity<ApiErrorInfo>(error, HttpStatus.UNAUTHORIZED);
+    return entity;
+  }
+  
+  @ExceptionHandler(value={ Exception.class })
+  @ResponseBody
+  public ResponseEntity<ApiErrorInfo> handleCustomException(Exception e) {
+    ApiErrorInfo error = new ApiErrorInfo("서버측 처리 오류 : " + e.getMessage(), "E100");
+    ResponseEntity<ApiErrorInfo> entity = 
+        new ResponseEntity<ApiErrorInfo>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    return entity;
+  }
+}
+
+------
+[ ApiErrorInfo.java 검토]
+
+package com.multi.contactsapp.util;
+......
+@JacksonXmlRootElement(localName="restApiError")
+public class ApiErrorInfo {
+  private String message;
+  private String status;
+  
+  //생성자와 Getter,Setter 생략
+}
+
+
+** 291p
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>API KEY Client</title>
+<script src="https://code.jquery.com/jquery.js"></script>
+<script type="text/javascript">
+$(function() {
+  $("#getContacts").click(function() {
+    var param = { key : "이곳에 apikey를 지정합니다" };
+    $("#list").empty();
+    $.get("http://tfactory.com:8080/contacts", param)
+    .done(function(data) {
+      if (data.contacts != null) {
+        var str = "";
+        for (var i=0; i < data.contacts.length; i++) {
+          var c = data.contacts[i];
+          str+= `<div>${c.no}: ${c.name}, ${c.tel}, ${c.address}</div>`;
+        }
+        $("#list").append(str);
+      } else {
+        $("#list").append(JSON.stringify(data));
+      }
+    })
+    .fail(function(error) {
+      console.log(error);
+    })
+  })
+})
+</script>
+</head>
+<body>
+  <div>
+    <button id="getContacts">연락처 조회하기</button>
+    <div id="list"></div>
+  </div>
+</body>
+</html>
+
+

@@ -1,0 +1,287 @@
+** 445p
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.2.0</version>
+</dependency>
+
+
+** 446p
+package com.multi.contactsapp;
+
+import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+
+//@formatter:off
+@Configuration
+@OpenAPIDefinition(
+    info = @Info(
+        title = "연락처 서비스 문서화", 
+        description = "연락처 서비스 API에 대한 설명", 
+        version = "1.0"
+    )
+)
+public class SpringDocConfig { }
+//@formatter:on
+
+
+** 448p
+<< application.properties 예시>>
+springdoc.api-docs.path=/api-docs
+springdoc.paths-to-match=/api/**
+springdoc.version=v1.0
+
+------
+
+<< application.yml 예시>>
+springdoc:
+   paths-to-match: /api/**
+   api-docs:
+        path: /api-docs
+   version: v1.0
+
+
+** 450p
+
+@Schema(title = "연락처 한건 정보")
+@JacksonXmlRootElement(localName = "contact")
+public class Contact {
+  @NotBlank
+  @Size(min = 0)
+  @Schema(title = "일련번호", example = "1001")
+  @JacksonXmlProperty(isAttribute = true)
+  private long no;
+  @NotNull
+  @Schema(title = "이름", example = "홍길동")
+  private String name;
+  @NotBlank
+  @Schema(title = "전화번호", example = "010-1111-2222")
+  @JacksonXmlProperty(localName = "phone")
+  private String tel;
+  @Schema(title = "주소", example = "서울시")
+  private String address;
+
+  ……  
+}
+
+
+** 451p
+package com.multi.contactsapp;
+......
+@RestController
+@RequestMapping(value = "/contacts")
+@Tag(name = "연락처 API", description = "연락처 서비스 API 상세 설명")
+public class ContactRestController {
+  @Autowired
+  private ContactService contactService;
+  @Operation(
+      summary = "연락처 목록 조회", 
+      description = "페이징을 사용해 연락처 목록 조회", 
+      responses = {
+          @ApiResponse(responseCode = "200", description = "조회된 연락처 정보를 반환함."),
+          @ApiResponse(responseCode = "400", description = "API Exception 오류 발생")
+      }
+  )
+  @GetMapping()
+  public ContactList getContactList(
+      @Parameter(description = "페이지 번호", example = "2")
+        @RequestParam(value = "pageno", required = false, defaultValue = "0") int pageNo,
+      @Parameter(description = "페이지 사이즈", example = "3")
+        @RequestParam(value = "pagesize", required = false, defaultValue = "3") int pageSize) {
+    ContactList contactList = null;
+    if (pageNo < 1) {
+      contactList = contactService.getContactList();
+    } else {
+      if (pageSize < 2)
+        pageSize = 5;
+      contactList = contactService.getContactList(pageNo, pageSize);
+    }
+    return contactList;
+  }
+
+  ......
+
+  @Operation(
+      summary = "연락처 추가", 
+      description = "JSON/XML로 전달된 연락처 한건 정보를 추가함", 
+      responses = {
+          @ApiResponse(responseCode = "200", description = "추가 성공/실패 여부 응답, Result객체"),
+          @ApiResponse(responseCode = "400", description = "API Exception 오류 발생")
+      }
+  )
+  @PostMapping()
+   public Result insertContact(@Valid @RequestBody Contact c) {
+    String name = c.getName();
+    String tel = c.getTel();
+    if (name == null || name.equals("") || tel == null || tel.equals("")) {
+      throw new ApiException("이름과 전화번호는 필수 입력 항목입니다.", "102");
+    }
+    return contactService.insertContact(c);
+  }
+}
+
+
+** 454p
+package com.multi.contactsapp.util;
+......
+
+@ControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
+  @ExceptionHandler(value = { ApiException.class })
+  @ResponseBody
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ResponseEntity<ApiErrorInfo> handleCustomException(ApiException e) {
+    ApiErrorInfo error = new ApiErrorInfo("@ControllerAdvice : " + e.getMessage(), e.getStatus());
+    ResponseEntity<ApiErrorInfo> entity = new ResponseEntity<ApiErrorInfo>(error, HttpStatus.BAD_REQUEST);
+    return entity;
+  }
+}
+
+
+** 460p
+ @Bean
+  RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+    JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
+    RegisteredClient client1 = jdbcRegisteredClientRepository.findByClientId("client1");
+    if (client1 == null) {
+      RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        ……(생략)
+        .redirectUri("https://oidcdebugger.com/debug")
+        .redirectUri("http://jcornor.com:8000/callback")
+        .redirectUri("https://oauth.pstmn.io/v1/callback")
+        .redirectUri("http://server:8000/swagger-ui/oauth2-redirect.html")
+        .scope(OidcScopes.OPENID).scope("profiles").scope("contacts").scope("messages")
+        .tokenSettings(tokenSettings()).build();
+      jdbcRegisteredClientRepository.save(registeredClient);
+    }
+    ……(생략)
+  }
+
+
+** 461p
+package com.multi.oauth20server;
+......
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class AuthorizationServerCorsFilter implements Filter {
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+        HttpServletResponse response = (HttpServletResponse) res;
+        HttpServletRequest request = (HttpServletRequest) req;
+        response.setHeader("Access-Control-Allow-Origin", "http://server:8000");
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+        response.setHeader("Access-Control-Allow-Methods","*");
+        response.setHeader("Access-Control-Max-Age", "3600");
+        response.setHeader("Access-Control-Allow-Headers",
+                "Origin, X-Requested-With, Content-Type, Accept, Key, Authorization");
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else {
+            chain.doFilter(req, res);
+        }
+    }
+}
+
+
+** 462p
+<!-- 두 의존 패키지의 버전은 달라질 수 있음 -->
+<!-- 기본 springdoc 문서화에 필요한 의존성 -->
+<dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.2.0</version>
+</dependency>
+<!-- open api security 관련 문서화를 위해 필요한 의존성 -->
+<dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-security</artifactId>
+      <version>1.7.0</version>
+</dependency>
+
+
+** 463p
+springdoc.swagger-ui.oauth.client-id=client1
+springdoc.swagger-ui.oauth.client-secret=1234
+
+------
+public class ResourceSecurityConfig {  
+  @Bean
+  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+      http.csrf(Customizer.withDefaults())
+          .authorizeHttpRequests((authz) -> authz
+            .requestMatchers("/swagger/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+            .requestMatchers("/api/contacts").hasAuthority("SCOPE_contacts")
+            .requestMatchers("/api/profiles").hasAuthority("SCOPE_profiles")
+              .anyRequest().authenticated()
+          )
+          .oauth2ResourceServer(oauth2 -> oauth2
+              .jwt(Customizer.withDefaults())
+          );
+    return http.build();
+  }
+}
+
+
+** 464p
+package com.multi.oauth20server;
+......
+@OpenAPIDefinition(
+    info = @Info(  title = "OAuth2 리소스 서버 문서화 테스트",  description = "OAuth2 리소스 서버에 대한 상세 설명", 
+        version = "1.0")
+)
+@SecurityScheme(
+    name = "oauth2_auth", type = SecuritySchemeType.OAUTH2,
+    flows = @OAuthFlows(
+        authorizationCode = @OAuthFlow(
+            authorizationUrl = "http://tfactory.com/oauth2/authorize", tokenUrl = "http://tfactory.com/oauth2/token", 
+            scopes = {  
+                @OAuthScope(name = "messages", description = "message scope"),
+                @OAuthScope(name = "contacts", description = "contacts scope"),
+                @OAuthScope(name = "profiles", description = "profiles scope") 
+            }
+        )
+    )
+)
+public class SpringDocConfig { }
+
+
+** 465p
+package com.multi.oauth20server;
+......
+@RestController
+@RequestMapping(value = "/api")
+@SecurityRequirement(name = "oauth2_auth")
+public class ContactController {
+  ……
+
+  @GetMapping(value = "/contacts", produces = { "application/json" })
+  public List<Contact> getContactList() {
+    return contactRepository.findAll();
+  }
+
+  @GetMapping(value = "/profiles", produces = { "application/json" })
+  public HashMap<String, String> getProfile() {
+     ……
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
