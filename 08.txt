@@ -641,6 +641,23 @@ public class ResourceSecurityConfig {
 }
 
 
+** 440p
+package com.multi.oauth20server;
+......
+@RestController
+@RequestMapping(value="/api")
+public class ContactController {  
+    ......
+
+   @GetMapping(value="/userinfo") 
+   public HashMap<String, String> getUserName(@AuthenticationPrincipal Jwt jwt) {
+       HashMap<String, String> myinfo = new HashMap<String, String>();
+       String username = jwt.getClaimAsString("sub");
+       myinfo.put("userid", username);
+       return myinfo;
+   }
+}
+
 
 
 
