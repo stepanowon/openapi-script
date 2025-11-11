@@ -361,8 +361,7 @@ public class SpringSecurityConfig {
   // 2. Password 인코더로 BCryptPasswordEncoder 사용
   @Bean
   DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
-    DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
-    auth.setUserDetailsService(userDetailsService);
+    DaoAuthenticationProvider auth = new DaoAuthenticationProvider(userDetailsService);
     auth.setPasswordEncoder(passwordEncoder());
     return auth;
   }
@@ -393,10 +392,8 @@ package com.multi.oauth20server;
 
 @Configuration
 public class AuthorizationServerConfig {
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
-
+  @Autowired
+  PasswordEncoder passwordEncoder;
   /**
    *  * AuthorizationServer 보안 필터 적용
    *    - SpringSecurityConfig의 defaultSecurityFilterChain Bean보다 로드 우선순위를 높여야 함
@@ -407,9 +404,11 @@ public class AuthorizationServerConfig {
   @Bean
   @Order(Ordered.HIGHEST_PRECEDENCE)
   SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
-    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
-    return http.formLogin(Customizer.withDefaults()).build();
+    OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer();
+	authorizationServerConfigurer.oidc(Customizer.withDefaults());
+    http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher()).with(authorizationServerConfigurer, Customizer.withDefaults());
+    http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated()).formLogin(Customizer.withDefaults());
+    return http.build();
   }
 
   /**
@@ -456,8 +455,8 @@ public class AuthorizationServerConfig {
  // JWT 토큰 설정 : AT 유효 기간(60분),  RT 유효 기간(30일), RT 사용
   @Bean
   TokenSettings tokenSettings() {
-    return TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(60))
-        .refreshTokenTimeToLive(Duration.ofDays(30)).reuseRefreshTokens(true).build();
+    return TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(30))
+        .refreshTokenTimeToLive(Duration.ofDays(1)).reuseRefreshTokens(false).build();
   }
 
   // 사용자가 Client 앱을 승인하기 위해 승인 페이지(Consent Page)를 띄우도록 설정. 묵시적 승인(X)
@@ -477,7 +476,7 @@ public class AuthorizationServerConfig {
     RegisteredClient client1 = jdbcRegisteredClientRepository.findByClientId("client1");
     if (client1 == null) {
       RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-        .clientId("client1").clientSecret(passwordEncoder().encode("1234")).clientSettings(clientSettings())
+        .clientId("client1").clientSecret(passwordEncoder.encode("1234")).clientSettings(clientSettings())
         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
