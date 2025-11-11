@@ -6,8 +6,8 @@ create table tbl_apikey
  apiKey varchar2(200) NOT NULL,
  hostName varchar2(200) NOT NULL, 
  count number default 0,
- regdate date default current_date,
- updateDate date default current_date
+ regdate date default current_timestamp,
+ updateDate date default current_timestamp
 );
 
 alter table tbl_apikey add constraint pk_apikey  primary key (apiKey);
