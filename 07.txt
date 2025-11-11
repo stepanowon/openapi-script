@@ -136,7 +136,7 @@ CREATE TABLE tbl_consumer
 	userid		varchar2(20),
 	callbackurl	varchar2(500),
 	appname		varchar2(100),
-	regdate timestamp default current_date
+	regdate timestamp default current_timestamp
 );
 
 alter table tbl_consumer add constraint pk_consumer  primary key (consumerkey);
@@ -150,7 +150,7 @@ CREATE TABLE tbl_request_token
 	verifier		varchar2(128),
 	callback		varchar(500),
 	userno          number,
-	regdate timestamp default current_date
+	regdate timestamp default current_timestamp
 );
 
 alter table tbl_request_token add constraint pk_request_token  primary key (requesttoken);
