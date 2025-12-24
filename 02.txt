@@ -19,19 +19,20 @@ spring.datasource.password=
 spring.datasource.driver-class-name=org.h2.Driver
 
 # mybatis config, mapper
-mybatis.config-location: classpath:mybatis-config.xml
+mybatis.config-location=classpath:mybatis-config.xml
 mybatis.mapper-locations=mapper/**/*.xml
 
 #Encoding UTf-8
-server.servlet.encoding.charset=UTF-8
-server.servlet.encoding.enabled=true
-server.servlet.encoding.force=true
-server.servlet.encoding.force-request=true
-server.servlet.encoding.force-response=true
+spring.servlet.encoding.charset=UTF-8
+spring.servlet.encoding.enabled=true
+spring.servlet.encoding.force=true
+spring.servlet.encoding.force-request=true
+spring.servlet.encoding.force-response=true
 
 # Thymeleaf setting
 spring.thymeleaf.cache=false
 spring.thymeleaf.encoding=utf-8
+
 
 
 ** 78p
