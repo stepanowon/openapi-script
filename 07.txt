@@ -41,7 +41,7 @@ public class OAuth10RequestServlet extends HttpServletBean {
       HttpSession session = req.getSession();
       session.setAttribute("RT", RT);
       session.setAttribute("RTS", RTS);
-      resp.sendRedirect(Setup.AUTHORIZE_URL + "?" + OAuthMsgConstants.OAUTH_TOKEN + "=" + RT);
+      resp.sendRedirect(Setup.AUTHORIZE_URL + "?" + OAuthConstant.OAUTH_TOKEN + "=" + RT);
     } catch (Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

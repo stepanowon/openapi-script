@@ -166,11 +166,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 package com.multi.contactsapp.util;
 ......
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(value={ ApiKeyException.class })
-  @ResponseBody
   public ResponseEntity<ApiErrorInfo> handleApiKeyException(ApiKeyException e) {
     ApiErrorInfo error = new ApiErrorInfo("API Key 처리 오류 : " + e.getMessage(), e.getStatus());
     ResponseEntity<ApiErrorInfo> entity = 
@@ -179,7 +178,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
   
   @ExceptionHandler(value={ Exception.class })
-  @ResponseBody
   public ResponseEntity<ApiErrorInfo> handleCustomException(Exception e) {
     ApiErrorInfo error = new ApiErrorInfo("서버측 처리 오류 : " + e.getMessage(), "E100");
     ResponseEntity<ApiErrorInfo> entity = 
