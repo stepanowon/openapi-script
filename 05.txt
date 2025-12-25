@@ -21,13 +21,13 @@ public class Sample1 {
       if (response.getStatusLine().getStatusCode() == 200) {
           ResponseHandler<String> handler = new BasicResponseHandler();
           String body = handler.handleResponse(response);
-          System.out.println(body);
+          System.out.println("## 응답 결과 : " + body);
       } else {
-          System.out.println("상태코드 : " + response.getStatusLine().getStatusCode());
+          System.out.println("## 상태코드 : " + response.getStatusLine().getStatusCode());
       }
   }
-
 }
+
 
 
 ** 220p
@@ -49,10 +49,10 @@ public class Sample2 {
     if (response.getStatusLine().getStatusCode() == 200) {
       ResponseHandler<String> handler = new BasicResponseHandler();
       String body = handler.handleResponse(response);
-      System.out.println(body);
+      System.out.println("## 응답 결과 : " + body);
     } else {
-      System.out.println("상태코드 : " + response.getStatusLine().getStatusCode());
-    }
+      System.out.println("## 상태코드 : " + response.getStatusLine().getStatusCode());
+    }  
   }
 }
 
@@ -155,9 +155,9 @@ public class Sample2 {
 
 ** 251p
 <dependency>
-   <groupId>org.springframework.cloud</groupId>
-   <artifactId>spring-cloud-starter-gateway</artifactId>
-   <version>4.0.7</version>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
+    <version>5.0.0</version>
 </dependency>
 
 https://mageddo.com/tools/yaml-converter
@@ -172,14 +172,15 @@ spring:
     web-application-type: reactive
   cloud:
     gateway:
-      routes:
-      - id: rewritepath_route
-        uri: http://tfactory.com:8080
-        predicates:
-        - Path=/api/**
-        filters:
-        - RewritePath=/api/?(?<segment>.*), /$\{segment}
-
+      server:
+        webflux:
+          routes:
+            - id: rewritepath_route
+              uri: http://tfactory.com:8080
+              predicates:
+              - Path=/api/**
+              filters:
+              - RewritePath=/api/?(?<segment>.*), /$\{segment}
 
 
 ** 258p
@@ -199,6 +200,7 @@ public class JsonpFilter implements Filter {
       callback = httpServletRequest.getParameter("callback");
       method = httpServletRequest.getMethod().toLowerCase();
     }
+
     if (method.equals("get") && callback != null) {
       OutputStream out = response.getOutputStream();
       out.write(String.format("/**/ %s(", callback).getBytes());
@@ -221,6 +223,7 @@ public class JsonpFilter implements Filter {
     }
   }
 }
+
 
 
 ** 261p
