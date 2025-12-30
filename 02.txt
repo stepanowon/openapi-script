@@ -1,4 +1,4 @@
-** 72p
+** 슬라이드 51
 DROP TABLE contact;
 
 CREATE TABLE contact 
@@ -11,7 +11,7 @@ CREATE TABLE contact
 
 
 
-** 76p
+** 슬라이드 51
 # datasource 
 spring.datasource.url=jdbc:h2:tcp://localhost/~/test
 spring.datasource.username=sa
@@ -19,7 +19,7 @@ spring.datasource.password=
 spring.datasource.driver-class-name=org.h2.Driver
 
 # mybatis config, mapper
-mybatis.config-location=classpath:mybatis-config.xml
+mybatis.config-location: classpath:mybatis-config.xml
 mybatis.mapper-locations=mapper/**/*.xml
 
 #Encoding UTf-8
@@ -34,8 +34,8 @@ spring.thymeleaf.cache=false
 spring.thymeleaf.encoding=utf-8
 
 
+** 슬라이드 57
 
-** 78p
 package com.multi.contactsapp.domain;
 public class Contact {
 	private long no;
@@ -46,7 +46,8 @@ public class Contact {
 }
 
 
-**79p
+**슬라이드 58
+
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" 
     "http://mybatis.org/dtd/mybatis-3-config.dtd">
@@ -57,7 +58,9 @@ public class Contact {
 </configuration>
 
 
-**80p
+
+** 슬라이드 59
+
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper 
    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
@@ -93,7 +96,7 @@ public class Contact {
 </mapper>
 
 
-**81p
+** 슬라이드 60
 package com.multi.contactsapp.dao;
 ......
 @Repository
@@ -134,7 +137,7 @@ public class ContactDAO {
 }
 
 
-** 83p
+** 슬라이드 62
 package com.multi.contactsapp.service;
 ......
 @Service
@@ -163,7 +166,7 @@ public class ContactService {
 
 
 
-** 85p
+** 슬라이드 64
 
 @Controller
 @RequestMapping(value=“/contacts”)
@@ -191,7 +194,8 @@ public class ContactController {
 }
 
 
-** 86p
+** 슬라이드 65
+
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="utf-8">

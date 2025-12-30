@@ -1,4 +1,5 @@
-** 322p
+** 슬라이드 27
+
 package com.multi.oauth10client;
 
 public class Setup {
@@ -21,7 +22,8 @@ public class Setup {
 }
 
 
-** 324p
+** 슬라이드 29
+
 public class OAuth10RequestServlet extends HttpServletBean {
   ......
   @Override
@@ -50,7 +52,8 @@ public class OAuth10RequestServlet extends HttpServletBean {
 }
 
 
-** 326p
+** 슬라이드 31
+
 public class OAuth10CallbackServlet extends HttpServletBean {
   ......
   @Override
@@ -81,7 +84,7 @@ public class OAuth10CallbackServlet extends HttpServletBean {
 }
 
 
-** 327p
+** 슬라이드 32
 public class OAuth10ResourceServlet extends HttpServletBean {
   ......
   @Override
@@ -114,7 +117,8 @@ public class OAuth10ResourceServlet extends HttpServletBean {
 
 
 
-** 332p 테이블
+** 슬라이드 37
+
 drop table tbl_request_token;
 drop table tbl_consumer;
 drop table tbl_users;
@@ -164,7 +168,8 @@ commit;
 
 
 
-** 336p
+** 슬라이드 41
+
 package com.multi.oauth10server.controller;
 ......
 @Controller
@@ -212,7 +217,8 @@ public class RequestTokenController {
 }
 
 
-** 338p
+** 슬라이드 43
+
 <%@ page language="java" contentType="text/plain; charset=utf-8"
     pageEncoding="utf-8"%>
 <%
@@ -222,7 +228,8 @@ public class RequestTokenController {
 
 
 
-** 342p
+** 슬라이드 47
+
 @Controller
 @RequestMapping(value = "/oauth/authorize")
 public class AuthorizeController {
@@ -299,7 +306,8 @@ public class AuthorizeController {
 }
 
 
-** 345p
+** 슬라이드 50
+
 <%@ page language="java" contentType="text/html; charset=utf-8"
     pageEncoding="utf-8"%>
 <%@ page import="com.multi.oauth10server.util.*" %>
@@ -357,8 +365,8 @@ function goDeny() {
 </html>
 
 
+** 슬라이드 52
 
-** 347p
 <%@ page language="java" contentType="text/html; charset=utf-8"
     pageEncoding="utf-8"%>
 <%@ page import="com.multi.oauth10server.model.*" %>    
@@ -384,7 +392,8 @@ function goDeny() {
 </html>
 
 
-** 351p
+** 슬라이드 56
+
 package com.multi.oauth10server.controller;
 ......
 @Controller
@@ -431,7 +440,8 @@ public class AccessTokenController {
 }
 
 
-** 353p
+** 슬라이드 58
+
 <%@ page language="java" contentType="text/plain; charset=utf-8"
     pageEncoding="utf-8"%>
 <%
@@ -440,7 +450,8 @@ public class AccessTokenController {
 %>
 
 
-** 355p
+** 슬라이드 60
+
 @RestController
 public class MyInfoController {
 
@@ -454,7 +465,8 @@ public class MyInfoController {
 }
 
 
-** 356p
+** 슬라이드 61
+
 package com.multi.oauth10server.util;
 ......
 @Component
@@ -483,7 +495,8 @@ public class OAuthInterceptor  implements HandlerInterceptor  {
 }
 
 
-** 357p
+** 슬라이드 62
+
 package com.multi.oauth10server;
 ......
 
@@ -498,44 +511,5 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

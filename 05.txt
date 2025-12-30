@@ -1,4 +1,4 @@
-** 218p
+** 슬라이드 4
 <dependency>
   <groupId>org.apache.httpcomponents</groupId>
   <artifactId>httpclient</artifactId>
@@ -6,7 +6,7 @@
 </dependency>
 
 
-** 219p
+** 슬라이드 5
 package httpclienttest;
 ......
 public class Sample1 {
@@ -30,7 +30,7 @@ public class Sample1 {
 
 
 
-** 220p
+** 슬라이드 6
 package httpclienttest;
 ......
 public class Sample2 {
@@ -57,7 +57,8 @@ public class Sample2 {
 }
 
 
-** 238p
+** 슬라이드 24
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -153,7 +154,7 @@ public class Sample2 {
 </html>
 
 
-** 251p
+** 슬라이드 37
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
@@ -163,7 +164,7 @@ public class Sample2 {
 https://mageddo.com/tools/yaml-converter
 
 
-** 252p
+** 슬라이드 38
 server:
   port: 8000
 
@@ -183,7 +184,7 @@ spring:
               - RewritePath=/api/?(?<segment>.*), /$\{segment}
 
 
-** 258p
+** 슬라이드 44
 package com.multi.contactsapp.filter;
 ......
 
@@ -200,7 +201,6 @@ public class JsonpFilter implements Filter {
       callback = httpServletRequest.getParameter("callback");
       method = httpServletRequest.getMethod().toLowerCase();
     }
-
     if (method.equals("get") && callback != null) {
       OutputStream out = response.getOutputStream();
       out.write(String.format("/**/ %s(", callback).getBytes());
@@ -226,7 +226,8 @@ public class JsonpFilter implements Filter {
 
 
 
-** 261p
+** 슬라이드 47
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -249,7 +250,7 @@ public class JsonpFilter implements Filter {
 </html>
 
 
-** 262p
+** 슬라이드 48
 ……
 <body>
   <div id="container">
@@ -273,7 +274,8 @@ public class JsonpFilter implements Filter {
 </html>
 
 
-** 269p
+** 슬라이드 55
+
 @CrossOrigin(origins={ "http://jcornor.com:8000" })
 @RequestMapping(method = RequestMethod.GET)
 public ContactList getContactList() {
@@ -294,7 +296,8 @@ public class ContactRestController {
 }
 
 
-** 270p
+** 슬라이드 56
+
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
     @Override
@@ -314,7 +317,8 @@ public void addCorsMappings(CorsRegistry registry) {
 }
 
 
-** 271p
+** 슬라이드 57
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -334,31 +338,4 @@ $(function() {
    <h2>Console Log를 확인합니다.</h2>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

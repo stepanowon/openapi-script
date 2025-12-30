@@ -1,4 +1,4 @@
-** 278p
+** 슬라이드 5
 DROP TABLE tbl_apiKey;
 
 create table tbl_apikey 
@@ -13,7 +13,7 @@ create table tbl_apikey
 alter table tbl_apikey add constraint pk_apikey  primary key (apiKey);
 
 
-** 279p
+** 슬라이드 6
 package com.multi.contactsapp.openapi;
 
 ......
@@ -27,7 +27,8 @@ public class ApiKeyVO implements Serializable{
 }
 
 
-** 280p
+** 슬라이드 7 
+
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper 
    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
@@ -48,7 +49,8 @@ public class ApiKeyVO implements Serializable{
 </mapper> 
 
 
-** 281p
+** 슬라이드 8
+
 package com.multi.contactsapp.openapi;
 
 ......
@@ -71,7 +73,8 @@ public class ApiKeyRepositoryImpl implements ApiKeyRepository {
 }
 
 
-** 282p
+** 슬라이드 9
+
 public String requestNewAPIKey(ApiKeyVO apiKeyVO) throws Exception {
 
   String apiKey = DigestUtils.md5DigestAsHex(UUID.randomUUID().toString().getBytes());    
@@ -86,7 +89,8 @@ public String requestNewAPIKey(ApiKeyVO apiKeyVO) throws Exception {
 }
 
 
-** 283p
+** 슬라이드 10
+
 public void checkApiKey(String hostname, String apiKey) throws ApiKeyException {
    ApiKeyVO vo = repository.read(apiKey);
    if (vo == null) {
@@ -102,7 +106,8 @@ public void checkApiKey(String hostname, String apiKey) throws ApiKeyException {
 }
 
 
-** 284p
+** 슬라이드 11
+
 package com.multi.contactsapp;
 ......
 
@@ -124,7 +129,8 @@ public class KeyProcessController {
 }
 
 
-** 286p
+** 슬라이드 13
+
 package com.multi.contactsapp.openapi;
 ......
 @Component
@@ -162,7 +168,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 }
 
 
-** 287p
+** 슬라이드 14
 package com.multi.contactsapp.util;
 ......
 
@@ -200,7 +206,8 @@ public class ApiErrorInfo {
 }
 
 
-** 291p
+** 슬라이드 18
+
 <!DOCTYPE html>
 <html>
 <head>

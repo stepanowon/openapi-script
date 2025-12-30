@@ -1,4 +1,5 @@
-** 445p
+** 슬라이드 3
+
 <dependency>
     <groupId>org.springdoc</groupId>
     <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -10,8 +11,11 @@
 package com.multi.contactsapp;
 
 import org.springframework.context.annotation.Configuration;
+
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
 
 //@formatter:off
 @Configuration
@@ -28,7 +32,10 @@ public class SpringDocConfig { }
 //@formatter:on
 
 
-** 448p
+
+
+** 슬라이드 6
+
 << application.properties 예시>>
 springdoc.api-docs.path=/api-docs
 springdoc.paths-to-exclude=/test/**
@@ -44,7 +51,7 @@ springdoc:
    version: v1.0
 
 
-** 450p
+** 슬라이드 8
 
 @JsonRootName(value = "contact")
 @Schema(title = "연락처 한건 정보", description = "Contact 도메인 클래스입니다.")
@@ -67,7 +74,8 @@ public class Contact {
 }
 
 
-** 451p
+** 슬라이드 9
+
 package com.multi.contactsapp;
 ......
 @RestController
@@ -108,12 +116,12 @@ public class ContactRestController {
   ......
 
 	@Operation(
-    summary = "연락처 추가", 
-    description = "POST로 전달한 연락처 한건 정보(JSON or XML)를 추가함", 
-    responses = {
-        @ApiResponse(responseCode = "200", description = "추가 성공/실패 여부 응답, Result객체"),
-        @ApiResponse(responseCode = "400", description = "API Exception 오류 발생")
-    }
+		summary = "연락처 추가", 
+		description = "POST로 전달한 연락처 한건 정보(JSON or XML)를 추가함", 
+		responses = {
+			@ApiResponse(responseCode = "200", description = "추가 성공/실패 여부 응답, Result객체"),
+			@ApiResponse(responseCode = "400", description = "API Exception 오류 발생")
+		}
 	)
 	@PostMapping()
 	public Result insertContact(@Valid @RequestBody Contact c) {
@@ -126,7 +134,8 @@ public class ContactRestController {
 	}
 
 
-** 454p
+** 슬라이드 12
+
 package com.multi.contactsapp.util;
 ......
 
@@ -144,7 +153,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 }
 
 
-** 460p
+** 슬라이드 18
+
 	@Bean
 	RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
 		JdbcRegisteredClientRepository jdbcRegisteredClientRepository = new JdbcRegisteredClientRepository(
@@ -177,7 +187,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 
-** 461p
+** 슬라이드 19
+
 package com.multi.oauth20server;
 ......
 @Component
@@ -203,7 +214,8 @@ public class AuthorizationServerCorsFilter implements Filter {
 }
 
 
-** 462p
+** 슬라이드 20
+
 <!-- 두 의존 패키지의 버전은 달라질 수 있음 -->
 <!-- 기본 springdoc 문서화에 필요한 의존성 -->
 <dependency>
@@ -219,7 +231,8 @@ public class AuthorizationServerCorsFilter implements Filter {
 </dependency>
 
 
-** 463p
+** 슬라이드 21
+
 springdoc.swagger-ui.oauth.client-id=client1
 springdoc.swagger-ui.oauth.client-secret=1234
 
@@ -252,7 +265,8 @@ public class ResourceSecurityConfig {
 }
 
 
-** 464p
+** 슬라이드 22
+
 package com.multi.oauth20server;
 ......
 @OpenAPIDefinition(
@@ -275,7 +289,9 @@ package com.multi.oauth20server;
 public class SpringDocConfig { }
 
 
-** 465p
+
+** 슬라이드 23
+
 package com.multi.oauth20server;
 ......
 @RestController
@@ -294,22 +310,3 @@ public class ContactController {
      ……
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

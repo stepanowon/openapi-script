@@ -1,4 +1,4 @@
-** 170p
+** 슬라이드 10
 #data source settings
 spring.datasource.url=jdbc:h2:tcp://localhost/~/test
 spring.datasource.username=sa
@@ -12,7 +12,7 @@ spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
 
-** 171p
+** 슬라이드 11
 package com.multi.contactsapp.domain;
 ......
 @Entity
@@ -28,7 +28,8 @@ public class Contact {
 }
 
 
-** 173p
+
+** 슬라이드 13
 @Entity
 @SequenceGenerator(name="CONTACT_SEQ_GENERATOR", 
   sequenceName="CONTACT_SEQ", initialValue=1, allocationSize=1)
@@ -40,7 +41,8 @@ public class Contact {
 }
 
 
-** 174p
+
+** 슬라이드 14
 package com.multi.contactsapp.dao;
 ......
 public interface ContactRepository extends JpaRepository<Contact, Long>{
@@ -48,7 +50,8 @@ public interface ContactRepository extends JpaRepository<Contact, Long>{
 }
 
 
-** 175p
+
+** 슬라이드 15
 package com.multi.contactsapp;
 ......
 @RestController
@@ -61,17 +64,14 @@ public class ContactController {
   public List<Contact> getContactsAll() {
     return contactRepository.findAll(Sort.by(Sort.Direction.DESC, "no"));
   }
-  
   @GetMapping("{no}")
   public Optional<Contact> getContactOne(@PathVariable("no") long no) {
     return contactRepository.findById(no);
   }
-  
   @PostMapping
   public Contact insertContact(@RequestBody Contact c) {
     return contactRepository.save(c);
   }
-  
   @PutMapping("{no}")
   public Contact updateContact(@RequestBody Contact c, @PathVariable("no") long no) {
     c.setNo(no);
@@ -85,7 +85,8 @@ public class ContactController {
 }
 
 
-** 179p
+
+** 슬라이드 19
 spring.data.rest.detection-strategy=annotated
 
 ------
@@ -99,7 +100,7 @@ public interface ContactRepository extends JpaRepository<Contact, Long>{
 
 
 
-** 181p
+** 슬라이드 21
 package com.multi.contactsapp;
 ......
 @Configuration
@@ -114,7 +115,7 @@ public class RepositoryRestConfig implements RepositoryRestConfigurer {
 
 
 
-** 184p
+** 슬라이드 24
 package com.multi.contactsapp.dao;
 ......
 
@@ -125,14 +126,14 @@ public interface ContactRepository extends JpaRepository<Contact, Long>{
 }
 
 
-** 189p
+** 슬라이드 29
 <dependency>
   <groupId>org.springframework.data</groupId>
   <artifactId>spring-data-rest-hal-explorer</artifactId>
 </dependency>
 
 
-** 190p
+** 슬라이드 30
 <dependency>
      <groupId>org.springframework.boot</groupId>
      <artifactId>spring-boot-starter-hateoas</artifactId>
@@ -200,14 +201,14 @@ public class HalController {
 
 
 
-** 193p
+** 슬라이드 33
   @GetMapping() 
   public Page<Contact> getContactsAll(Pageable pageable) {
       return contactRepository.findAll(pageable);
   }
 
 
-** 195p
+** 슬라이드 35
 package com.multi.contactsapp.dao;
 ......
 @RepositoryRestResource(collectionResourceRel = "contacts", path = "contacts2")
@@ -221,12 +222,12 @@ public interface ContactRepository extends JpaRepository<Contact, Long>{
 }
 
 
-** 196p
+** 슬라이드 36
 http://localhost:8080/contacts2/search/findbytel?tel=010-2121&sort=name,desc
 http://localhost:8080/contacts2/search/findbyname?name=연&page=0&size=2
 
 
-** 199p
+** 슬라이드 39
 drop table contact;
     
 create table contact (
@@ -289,7 +290,7 @@ INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E010', '문수�
 INSERT INTO employee (emp_id, emp_name, phone, dept_id) VALUES ('E011', '송수연', '010-2222-2221', 'D002');
 
 
-** 200p
+** 슬라이드 40
 package com.multi.contactsapp.domain;
 ......
 @Entity
@@ -320,7 +321,7 @@ public class Employee {
 }
 
 
-** 201p
+** 슬라이드 41
 package com.multi.contactsapp.dao;
 ......
 public interface DepartmentRepository  extends JpaRepository<Department, String> {
@@ -335,7 +336,7 @@ public interface EmployeeRepository  extends JpaRepository<Employee, String> {
 }
 
 
-** 202p
+** 슬라이드 42
 package com.multi.contactsapp;
 ......
 @RestController
@@ -369,7 +370,7 @@ public class EmployeeController {
 }
 
 
-** 204p
+** 슬라이드 44
 package com.multi.contactsapp.domain;
 ......
 @Entity
@@ -387,7 +388,7 @@ public class Department {
 }
 
 
-** 206p
+** 슬라이드 46
 @Entity
 @JsonInclude(Include.NON_NULL)
 public class Employee {
@@ -399,18 +400,17 @@ public class Employee {
 }
 
 
-** 207p
-  @GetMapping("find2/{name}") 
-  public List<Employee> getDepartment2(
-    @PathVariable("name") String name) {
-    List<Employee> employeeList = employeeRepository.findByEmpNameStartingWith(name); 
-    if (employeeList.size() > 0) {
-      for (Employee e : employeeList) {
-        e.getDepartment().setEmployees(null);
-      }
-    }
-    return employeeList;
-  }
+** 슬라이드 47
+	@GetMapping("find2/{name}")
+	public List<Employee> getDepartment2(@PathVariable("name") String name) {
+		List<Employee> employeeList = employeeRepository.findByEmpNameStartingWith(name);
+		if (employeeList.size() > 0) {
+			for (Employee e : employeeList) {
+				e.getDepartment().setEmployees(null);
+			}
+		}
+		return employeeList;
+	}
 
 ------
   @GetMapping("{deptid}") 
@@ -426,7 +426,7 @@ public class Employee {
   }
 
 
-** 210p
+** 슬라이드 50
   @Query("select e from Employee e " + 
       " left join fetch e.department d " + 
       " where e.empName like :name%")
@@ -438,32 +438,32 @@ public class Employee {
   List<Object[]> queryEmpsByJPQL(String name);
 
 
-** 211p
-@GetMapping("find3/{name}") 
-public List<Employee> getDepartment3(@PathVariable("name") String name) {
-  List<Employee> list = employeeRepository.queryEmpByFetchJoin(name);
-  if (list.size() > 0) {
-    for (Employee e : list) {
-      e.getDepartment().setEmployees(null);
-    }
-  }
-  return list;
-}
+** 슬라이드 51
+	@GetMapping("find3/{name}")
+	public List<Employee> getDepartment3(@PathVariable("name") String name) {
+		List<Employee> list = employeeRepository.queryEmpByFetchJoin(name);
+		if (list.size() > 0) {
+			for (Employee e : list) {
+				e.getDepartment().setEmployees(null);
+			}
+		}
+		return list;
+	}
 
-@GetMapping("find4/{name}") 
-public List<Employee> getDepartment4(@PathVariable("name") String name) {
-  List<Object[]> list = employeeRepository.queryEmpsByJPQL(name);
-  List<Employee> empList = new ArrayList<Employee>();
-  if (list.size() > 0) {
-    for (Object[] objs : list) {
-      Employee e = new Employee((String)objs[0], (String)objs[1], (String)objs[2]);
-      e.setDepartment(new Department((String)objs[3], (String)objs[4], (String)objs[5]));
-      e.getDepartment().setEmployees(null);
-      empList.add(e);
-    }
-  }
-  return empList;
-}
+	@GetMapping("find4/{name}")
+	public List<Employee> getDepartment4(@PathVariable("name") String name) {
+		List<Object[]> list = employeeRepository.queryEmpsByJPQL(name);
+		List<Employee> empList = new ArrayList<Employee>();
+		if (list.size() > 0) {
+			for (Object[] objs : list) {
+				Employee e = new Employee((String) objs[0], (String) objs[1], (String) objs[2]);
+				e.setDepartment(new Department((String) objs[3], (String) objs[4], (String) objs[5]));
+				e.getDepartment().setEmployees(null);
+				empList.add(e);
+			}
+		}
+		return empList;
+	}
 
 
 

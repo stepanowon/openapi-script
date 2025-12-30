@@ -1,4 +1,4 @@
-** 113p
+** 슬라이드 23
 
 <dependency>
   <groupId>tools.jackson.dataformat</groupId>
@@ -12,7 +12,7 @@
 public class Contact {
    @JacksonXmlProperty(isAttribute = true)
    @JsonProperty(access = JsonProperty.Access.READ_ONLY) 
-	 private Long no; 
+   private Long no;
    private String name;
    @JacksonXmlProperty(localName="phone")
    private String tel;
@@ -21,7 +21,6 @@ public class Contact {
    
    //getter, setter, constructor 생략      
 }
-
 
 @JsonRootName(value = "contactList")
 public class ContactList {
@@ -36,7 +35,8 @@ public class ContactList {
 }
 
 
-** 116p
+
+** 슬라이드 26
 
 package com.multi.contactsapp.domain;
 ......
@@ -51,14 +51,14 @@ public class Result {
 }
 
 
-** 117p
+** 슬라이드 27
 
 package com.multi.contactsapp.domain;
 ......
 @JsonRootName(value = "contact")
 public class Contact {
 	@JacksonXmlProperty(isAttribute = true)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY) 
+                    @JsonProperty(access = JsonProperty.Access.READ_ONLY) 
 	private Long no;
 	private String name;
 	private String tel;
@@ -68,7 +68,8 @@ public class Contact {
 }
 
 
-** 118p
+
+** 슬라이드 28
 
 package com.multi.contactsapp.domain;
 ......
@@ -85,7 +86,7 @@ public class ContactList {
 }
 
 
-** 119p
+** 슬라이드 29
 
 package com.multi.contactsapp.service;
 ......
@@ -155,7 +156,7 @@ public class ContactService {
 }
 
 
-** 126p
+** 슬라이드 36
 
 package com.multi.contactsapp;
 ......
@@ -182,7 +183,7 @@ public class ContactRestController {
   }
 
   @GetMapping("{no}")
-  public Contact getContactOne(@PathVariable("no") long no) {
+  public Contact getContactOne(@PathVariable("no") Long no) {
     Contact c = new Contact();
     c.setNo(no);
     return contactService.getContactOne(c);
@@ -202,7 +203,7 @@ public class ContactRestController {
   }
 
   @DeleteMapping("{no}")
-  public Result updateContact(@PathVariable("no") long no) {
+  public Result updateContact(@PathVariable("no") Long no) {
     Contact c = new Contact();
     c.setNo(no);
     return contactService.deleteContact(c);
@@ -210,7 +211,7 @@ public class ContactRestController {
 }
 
 
-** 132p
+** 슬라이드 43
 
 package com.multi.contactsapp;
 ......
@@ -226,7 +227,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
   }  
 }
 
-** 136p
+** 슬라이드 46
 
 # static resources
 spring.mvc.static-path-pattern=/photos/**
@@ -239,7 +240,7 @@ spring.mvc.static-path-pattern=/photos/**
 spring.web.resources.static-locations=file:/httpresources/photos/
 
 
-** 137p
+** 슬라이드 47
 
 package com.multi.contactsapp;
 ......
@@ -256,7 +257,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 }
 
 
-** 140p
+** 슬라이드 50
 
 package com.multi.contactsapp.util;
 
@@ -279,7 +280,7 @@ public class ApiException extends RuntimeException {
 }
 
 
-** 141p
+** 슬라이드 51
 
 package com.multi.contactsapp.util;
 ......
@@ -313,7 +314,7 @@ public class ApiErrorInfo {
 }
 
 
-** 142p
+** 슬라이드 52
 
 package com.multi.contactsapp;
 ......
@@ -338,7 +339,8 @@ public class TestController {
 }
 
 
-** 144p
+
+** 슬라이드 54
 
 package com.multi.contactsapp.util;
 .......
@@ -356,7 +358,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 }
 
 
-** 148p
+** 슬라이드 58
 
 @PostMapping()
 public Result insertContact(@RequestBody Contact c) {
@@ -380,75 +382,76 @@ public Result updateContact(@PathVariable("no") long no, @RequestBody Contact c)
 }
 
 
-** 151p
+** 슬라이드 60
+
 package com.multi.contactsapp;
 ......
 @SpringBootTest
 @AutoConfigureMockMvc
 public class ContactRestControllerTest1 {
 
-	@Autowired
-	MockMvc mockMvc;
+  @Autowired
+  MockMvc mockMvc;
 
-	@MockitoBean
-	ContactService contactService;
+  @MockitoBean
+  ContactService contactService;
 
-	@Test
-	public void getAllContactsReturnsOkWithListOfContacts() throws Exception {
-		List<Contact> contacts = new ArrayList<Contact>();
-		contacts.add(new Contact(1L, "홍길동", "010-2222-1111", "서울"));
-		contacts.add(new Contact(2L, "이몽룡", "010-2222-1112", "제주"));
-		contacts.add(new Contact(3L, "성춘향", "010-2222-1113", "경기"));
-		contacts.add(new Contact(4L, "박문수", "010-2222-1114", "강원"));
+  @Test
+  public void getAllContactsReturnsOkWithListOfContacts() throws Exception {
+    List<Contact> contacts = new ArrayList<Contact>();
+    contacts.add(new Contact(1L, "홍길동", "010-2222-1111", "서울"));
+    contacts.add(new Contact(2L, "이몽룡", "010-2222-1112", "제주"));
+    contacts.add(new Contact(3L, "성춘향", "010-2222-1113", "경기"));
+    contacts.add(new Contact(4L, "박문수", "010-2222-1114", "강원"));
 
-		ContactList contactList = new ContactList(1, 4, 100, contacts);
-		Mockito.when(contactService.getContactList()).thenReturn(contactList);
-		// @formatter:off
-		mockMvc.perform(
-			MockMvcRequestBuilders.get("/contacts").accept(MediaType.APPLICATION_JSON)
-		)
-		.andExpect(MockMvcResultMatchers.status().isOk())
-		.andExpect(MockMvcResultMatchers.jsonPath("$.pageNo", Matchers.is(1)))
-		.andExpect(MockMvcResultMatchers.jsonPath("$.contacts", Matchers.hasSize(4)))
-		.andExpect(MockMvcResultMatchers.jsonPath("$.contacts[0].no", Matchers.is(1)))
-		.andExpect(MockMvcResultMatchers.jsonPath("$.contacts[3].address", Matchers.is("강원")));
-		// @formatter:on
-	}
+    ContactList contactList = new ContactList(1, 4, 100, contacts);
+    Mockito.when(contactService.getContactList()).thenReturn(contactList);
 
-	@Test
-	public void insertContactReturnsOkWithValidStatus() throws Exception {
-		Result result = new Result("ok", "연락처 추가 성공", "5");
+    mockMvc.perform(MockMvcRequestBuilders.get("/contacts").accept(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isOk())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.pageNo", Matchers.is(1)))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.contacts", Matchers.hasSize(4)))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.contacts[0].no", Matchers.is(1)))
+      .andExpect(MockMvcResultMatchers.jsonPath("$.contacts[3].address", Matchers.is("강원")));
+  }
 
-		Mockito.when(contactService.insertContact(Mockito.any((Contact.class)))).thenReturn(result);
-		// @formatter:off
-		mockMvc.perform(
-			MockMvcRequestBuilders.post("/contacts").contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"name\" : \"다희\", \"tel\" : \"010-9999-9999\", \"address\" : \"서울\" }")
-				.accept(MediaType.APPLICATION_JSON)
-		)
-		.andExpect(MockMvcResultMatchers.status().isOk())
-		.andExpect(MockMvcResultMatchers.jsonPath("$.status").value("ok"))
-		.andDo(MockMvcResultHandlers.print());
-		// @formatter:on
-	}
+  @Test
+  public void insertContactReturnsOkWithValidStatus() throws Exception {
+    Result result = new Result("ok", "연락처 추가 성공", "5");
+    
+    Mockito.when(contactService.insertContact(Mockito.any((Contact.class)))).thenReturn(result);
+    
+    mockMvc.perform(
+      MockMvcRequestBuilders.post("/contacts")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("{ \"name\" : \"다희\", \"tel\" : \"010-9999-9999\", \"address\" : \"서울\" }") 
+          .accept(MediaType.APPLICATION_JSON)
+      )
+      .andExpect(MockMvcResultMatchers.status().isOk())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("ok"))
+      .andDo(MockMvcResultHandlers.print());
+  }
 
-	@Test
-	public void invalidRequestPathReturns404() throws Exception {
-		mockMvc.perform(MockMvcRequestBuilders.get("/asdf").accept(MediaType.APPLICATION_JSON))
-				.andExpect(MockMvcResultMatchers.status().isNotFound());
-	}
-
-	@Test
-	public void invalidRequestReturns400WithAppStatus() throws Exception {
-		mockMvc.perform(MockMvcRequestBuilders.get("/test/error1").accept(MediaType.APPLICATION_JSON))
-				.andExpect(MockMvcResultMatchers.status().isBadRequest())
-				.andExpect(MockMvcResultMatchers.jsonPath("$.status").value("100"));
-	}
-
+  @Test
+  public void invalidRequestPathReturns404() throws Exception {
+    mockMvc.perform(MockMvcRequestBuilders.get("/asdf")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isNotFound());
+  }
+  
+  @Test
+  public void invalidRequestReturns400WithAppStatus() throws Exception {
+    mockMvc.perform(MockMvcRequestBuilders.get("/test/error1")
+      .accept(MediaType.APPLICATION_JSON))
+      .andExpect(MockMvcResultMatchers.status().isBadRequest())
+      .andExpect(MockMvcResultMatchers.jsonPath("$.status").value("100"));
+  }
 }
 
 
-** 154p
+
+
+** 슬라이드 63
 package com.multi.contactsapp;
 ......
 
@@ -486,30 +489,141 @@ public class ContactRestControllerTest2 {
 
 
 
-** 156p
+** 슬라이드 65
+
 @Bean
 RestTemplate restTemplate() {
-  RestTemplate restTemplate = new RestTemplate();
-  restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-  return restTemplate;
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters()
+                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+        return restTemplate;
 }
 
 
-** 157p
+** 슬라이드 66
 package com.multi.contactsapp;
 ......
 @SpringBootTest(webEnvironment = WebEnvironment.DEFINED_PORT)
 public class ContactRestControllerTest3 {
 
-	@Autowired
-	RestTemplate restTemplate;
+  @Autowired
+  RestTemplate restTemplate;
+  @Autowired
+  ObjectMapper objectMapper;
+  
+  @Test
+  public void getAllContactsReturnsOkWithListOfContacts_3() {
+    ResponseEntity<ContactList> entity = 
+      restTemplate.getForEntity("http://localhost:8080/contacts?pageno=1&pagesize=4", ContactList.class);
+    
+    assertEquals(HttpStatus.OK, entity.getStatusCode()); 
+    ContactList contactList = entity.getBody();
+    assertEquals(1, contactList.getPageNo());
+    assertEquals(4, contactList.getPageSize());
+    assertEquals(4, contactList.getContacts().size());
+  }
+
+ @Test
+  public void insertContactReturnsOkWithValidStatus_3()  {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    List<MediaType> mediaTypes = new ArrayList<MediaType>();
+    headers.setAccept(mediaTypes);
+
+    HttpEntity<Contact> reqEntity = new HttpEntity<Contact>(
+      new Contact(0L, "다희2", "010-5555-7777", "제주"), headers);
+    
+    ResponseEntity<Result> entity = restTemplate.postForEntity(
+      "http://localhost:8080/contacts", reqEntity, Result.class);
+    assertEquals(HttpStatus.OK, entity.getStatusCode()); 
+    Result result = entity.getBody();
+    assertEquals("ok", result.getStatus());
+  }
+  
+  @Test
+  public void insertInvalidContactReturnsOkWithBadRequest() {
+    HttpStatusCode status;
+    String apiStatus;
+    try {
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_JSON);
+      List<MediaType> mediaTypes = new ArrayList<MediaType>();
+      headers.setAccept(mediaTypes);
+      HttpEntity<Contact> reqEntity = new HttpEntity<Contact>(
+        new Contact(0L, "", "010-5555-7777", ""), headers);
+      ResponseEntity<ApiErrorInfo> entity = 
+         restTemplate.postForEntity("http://localhost:8080/contacts", reqEntity, ApiErrorInfo.class);
+      status = entity.getStatusCode();
+      apiStatus = entity.getBody().getStatus();
+    } catch (HttpStatusCodeException  e) {
+      status = e.getStatusCode();
+      ApiErrorInfo apiErrorInfo = objectMapper.readValue(e.getResponseBodyAsString(), ApiErrorInfo.class);
+      apiStatus = apiErrorInfo.getStatus();
+    }
+    assertEquals(HttpStatus.BAD_REQUEST, status); 
+    assertEquals("101", apiStatus);
+  }
+  
+  @Test
+  public void invalidRequestPathReturns404_3() {
+    HttpStatusCode status;
+    try {
+      ResponseEntity<Object> entity = restTemplate.getForEntity("http://localhost:8080/asdf", Object.class);
+      status = entity.getStatusCode();
+    } catch (HttpStatusCodeException  e) {
+      status = e.getStatusCode();
+    } 
+    assertEquals(HttpStatus.NOT_FOUND, status); 
+  }
+}
+
+** 슬라이드 69
+-- ContactRestControllerTest4.java
+package com.multi.contactsapp;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+
+import com.multi.contactsapp.domain.Contact;
+import com.multi.contactsapp.domain.ContactList;
+import com.multi.contactsapp.domain.Result;
+import com.multi.contactsapp.util.ApiErrorInfo;
+
+import tools.jackson.databind.ObjectMapper;
+
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+public class ContactRestControllerTest4 {
+	@LocalServerPort
+	private int port;
+
 	@Autowired
 	ObjectMapper objectMapper;
+	
+	private RestClient restClient;
+
+	@BeforeEach
+	void setUp() {
+		this.restClient = RestClient.builder().baseUrl("http://localhost:" + port).build();
+	}
 
 	@Test
-	public void getAllContactsReturnsOkWithListOfContacts_3() {
-		ResponseEntity<ContactList> entity = restTemplate
-				.getForEntity("http://localhost:8080/contacts?pageno=1&pagesize=4", ContactList.class);
+	public void getAllContactsReturnsOkWithListOfContacts_4() {
+		ResponseEntity<ContactList> entity = restClient.get().uri("/contacts?pageno=1&pagesize=4").retrieve()
+				.toEntity(ContactList.class);
 
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		ContactList contactList = entity.getBody();
@@ -519,57 +633,298 @@ public class ContactRestControllerTest3 {
 	}
 
 	@Test
-	public void insertContactReturnsOkWithValidStatus_3() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		List<MediaType> mediaTypes = new ArrayList<MediaType>();
-		headers.setAccept(mediaTypes);
+	public void insertContactReturnsOkWithValidStatus_4() {
+		ResponseEntity<Result> entity = restClient.post().uri("/contacts").contentType(MediaType.APPLICATION_JSON)
+				.body(new Contact(0L, "다희2", "010-5555-7777", "제주")).retrieve().toEntity(Result.class);
 
-		HttpEntity<Contact> reqEntity = new HttpEntity<Contact>(new Contact(0L, "다희2", "010-5555-7777", "제주"), headers);
-
-		ResponseEntity<Result> entity = restTemplate.postForEntity("http://localhost:8080/contacts", reqEntity,
-				Result.class);
 		assertEquals(HttpStatus.OK, entity.getStatusCode());
 		Result result = entity.getBody();
 		assertEquals("ok", result.getStatus());
 	}
 
 	@Test
-	public void insertInvalidContactReturnsOkWithBadRequest() {
-		HttpStatusCode status;
-		String apiStatus;
+	public void insertInvalidContactReturnsOkWithBadRequest_4() {
+		AtomicReference<HttpStatusCode> statusRef = new AtomicReference<>();
+		AtomicReference<String> apiStatusRef = new AtomicReference<>();
+		
 		try {
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			List<MediaType> mediaTypes = new ArrayList<MediaType>();
-			headers.setAccept(mediaTypes);
-			HttpEntity<Contact> reqEntity = new HttpEntity<Contact>(new Contact(0L, "", "010-5555-7777", ""), headers);
-			ResponseEntity<ApiErrorInfo> entity = restTemplate.postForEntity("http://localhost:8080/contacts",
-					reqEntity, ApiErrorInfo.class);
-			status = entity.getStatusCode();
-			apiStatus = entity.getBody().getStatus();
-		} catch (HttpStatusCodeException e) {
-			status = e.getStatusCode();
-			ApiErrorInfo apiErrorInfo = objectMapper.readValue(e.getResponseBodyAsString(), ApiErrorInfo.class);
-			apiStatus = apiErrorInfo.getStatus();
+			restClient.post()
+					.uri("/contacts")
+					.contentType(MediaType.APPLICATION_JSON)
+					.body(new Contact(0L, "", "010-5555-7777", ""))
+					.retrieve()
+					.onStatus(status -> status.value() == 400, (request, response) -> {
+						// 예외를 던지지 않고 처리
+						statusRef.set(response.getStatusCode());
+						ApiErrorInfo apiErrorInfo = objectMapper.readValue(
+							response.getBody(), ApiErrorInfo.class);
+						apiStatusRef.set(apiErrorInfo.getStatus());
+					})
+					.toBodilessEntity();
+		} catch (RestClientResponseException e) {
+			statusRef.set(HttpStatusCode.valueOf(e.getStatusCode().value()));
+			ApiErrorInfo apiErrorInfo = objectMapper.readValue(
+				e.getResponseBodyAsString(), ApiErrorInfo.class);
+			apiStatusRef.set(apiErrorInfo.getStatus());
 		}
-		assertEquals(HttpStatus.BAD_REQUEST, status);
-		assertEquals("101", apiStatus);
+		
+		assertEquals(HttpStatus.BAD_REQUEST, statusRef.get());
+		assertEquals("101", apiStatusRef.get());
 	}
 
 	@Test
-	public void invalidRequestPathReturns404_3() {
+	public void invalidRequestPathReturns404_4() {
 		HttpStatusCode status;
+
 		try {
-			ResponseEntity<Object> entity = restTemplate.getForEntity("http://localhost:8080/asdf", Object.class);
+			ResponseEntity<Object> entity = restClient.get().uri("/asdf").retrieve().toEntity(Object.class);
+
 			status = entity.getStatusCode();
-		} catch (HttpStatusCodeException e) {
-			status = e.getStatusCode();
+		} catch (RestClientResponseException e) {
+			status = HttpStatusCode.valueOf(e.getStatusCode().value());
 		}
+
 		assertEquals(HttpStatus.NOT_FOUND, status);
 	}
 
 }
+
+
+-- ContactRestControllerTest5.java
+package com.multi.contactsapp;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.client.RestTestClient;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+public class ContactRestControllerTest5 {
+	@Autowired
+	MockMvc mockMvc;
+
+	private RestTestClient restTestClient;
+
+	@BeforeEach
+	void setUp() {
+		this.restTestClient = RestTestClient.bindTo(mockMvc).build();
+	}
+
+	@Test
+	public void getAllContactsReturnsOkWithListOfContacts() {
+		// @formatter:off
+		restTestClient.get()
+				.uri(uriBuilder -> uriBuilder
+						.path("/contacts")
+						.queryParam("pageno", 1)
+						.queryParam("pagesize", 4)
+						.build())
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.pageNo").isEqualTo(1)
+				.jsonPath("$.pageSize").isEqualTo(4)
+				.jsonPath("$.contacts.length()").isEqualTo(4)
+				.jsonPath("$.contacts[0].no").value(no -> assertTrue((Integer)no > 0))
+				.jsonPath("$.contacts[0].name").value(name -> assertTrue(((String)name).matches("[가-힣]+")))
+				.jsonPath("$.contacts[0].tel").value(tel -> assertTrue(((String)tel).matches("^01[0-9]-\\d{3,4}-\\d{4}$")));
+		// @formatter:on
+	}
+
+	@Test
+	public void insertContactReturnsOkWithValidStatus() {
+		// @formatter:off
+		restTestClient.post()
+				.uri("/contacts")
+				.contentType(MediaType.APPLICATION_JSON)
+				.body("{ \"name\" : \"다희\", \"tel\" : \"010-9999-9999\", \"address\" : \"서울\" }")
+				.accept(MediaType.APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.status").isEqualTo("ok");
+		// @formatter:on
+	}
+}
+
+
+** 슬라이드 71
+@Override
+public void configureApiVersioning(ApiVersionConfigurer configurer) {
+    configure.usePathSegment(0).addSupportedVersions("1.0", "2.0").setDefaultVersion("1.0");
+}
+
+@RestController
+@RequestMapping("/{version}/api/orders")
+public class ApiVersionController {
+	@GetMapping(version="1.0")
+	public HashMap<String, String> getOrder1() {
+                             ......(생략)
+	}
+	
+	@GetMapping(version="2.0")
+	public HashMap<String, String> getOrder2() {
+                             ......(생략)
+	}
+}
+
+
+** 슬라이드 72
+@Override
+public void configureApiVersioning(ApiVersionConfigurer configurer) {
+    configurer.useRequestHeader("X-API-Version")
+             .useQueryParam("version")
+             .addSupportedVersions("1.0", "2.0")
+              .setDefaultVersion("1.0");
+}
+
+
+
+** 슬라이드 74
+package com.multi.contactsapp.domain;
+
+public class Todo {
+   private Long id;
+   private String todo;
+   private String desc;
+   private Boolean done;
+
+   //setter, getter, 생성자 생략	
+}
+
+
+** 슬라이드 75
+spring.http.serviceclient.todo-api.base-url=https://todosvc.bmaster.kro.kr
+spring.http.serviceclient.todo-api.connect-timeout=5s
+spring.http.serviceclient.todo-api.read-timeout=30s
+
+
+package com.multi.contactsapp.api;
+
+......(생략)
+
+@HttpExchange(url = "/todolist", accept = "application/json")
+public interface TodoApiClient {
+  @PostExchange("{owner}")
+  Result addTodo(@PathVariable String owner, @RequestBody Todo todo);
+  
+  @GetExchange("{owner}")
+  List<Todo> getTodoList(@PathVariable String owner) throws TimeoutException, IOException;
+}
+
+
+** 슬라이드 76
+@Bean
+RestClientHttpServiceGroupConfigurer todoApiConfigurer(
+    @Value("${spring.http.serviceclient.todo-api.base-url}") String baseUrl,
+    @Value("${spring.http.serviceclient.todo-api.connect-timeout}") Duration connectTimeout,
+    @Value("${spring.http.serviceclient.todo-api.read-timeout}") Duration readTimeout) {
+  return groups -> {
+    groups.filterByName("todo-api").forEachClient((group, clientBuilder) -> {
+      clientBuilder.baseUrl(baseUrl).requestFactory(new JdkClientHttpRequestFactory(
+          HttpClient.newBuilder().connectTimeout(connectTimeout).build()));
+    });
+  };
+}
+
+
+@SpringBootApplication
+@ImportHttpServices(group = "todo-api", basePackages = "com.multi.contactsapp.api")
+public class ContactswebApplication {
+  public static void main(String[] args) {
+    SpringApplication.run(ContactswebApplication.class, args);
+  }
+}
+
+
+
+** 슬라이드 77
+package com.multi.contactsapp.service;
+......(생략)
+
+@Service
+public class TodoService {
+  @Autowired
+  TodoApiClient api;
+  
+  public List<Todo> getTodoList(String owner) throws TimeoutException, IOException {
+    return api.getTodoList(owner);
+  }
+  
+  public Result addTodo(String owner, Todo todo) {
+    return api.addTodo(owner, todo);
+  }
+}
+
+
+** 슬라이드 78
+package com.multi.contactsapp;
+......(생략)
+
+@RestController
+@RequestMapping(value="/otherapi")
+public class APITestController {
+  @Autowired
+  TodoService todoService;
+  
+  @GetMapping("{owner}")
+  public List<Todo> getTodoListApi(@PathVariable String owner) throws Exception {
+    return todoService.getTodoList(owner);
+  }
+  
+  @PostMapping("{owner}")
+  public Result addTodoApi(@PathVariable String owner, @RequestBody Todo todo) {
+    return todoService.addTodo(owner, todo);
+  }
+  
+}
+
+
+** 슬라이드 80
+@SpringBootApplication
+@ImportHttpServices(group = "todo-api", basePackages = "com.multi.contactsapp.api")
+@EnableResilientMethods
+public class ContactswebApplication {
+
+  public static void main(String[] args) {
+    SpringApplication.run(ContactswebApplication.class, args);
+  }
+
+}
+
+
+** 슬라이드 81
+package com.multi.contactsapp.service;
+......(생략)
+
+@Service
+public class TodoService {
+  @Autowired
+  TodoApiClient api;
+
+  //재시도 횟수 : 2, 지수 백오프 배율 : 2
+  //첫 재시도 전 대기 시간 : 1000ms
+  @Retryable(maxRetries = 2, delay = 1000, multiplier = 2,
+      includes = { TimeoutException.class, IOException.class },
+      excludes = { IllegalArgumentException.class, ApiException.class })
+  public List<Todo> getTodoList(String owner) throws TimeoutException, IOException {
+    return api.getTodoList(owner);
+  }
+  
+  @ConcurrencyLimit(30)
+  public Result addTodo(String owner, Todo todo) {
+    return api.addTodo(owner, todo);
+  }
+}
+
 
 
 ----------------------------------------
