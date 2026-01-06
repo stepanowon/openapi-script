@@ -1,4 +1,4 @@
-** 슬라이드 42
+** 슬라이드 36
 
 package com.multi.bitlyclient.util;
 
@@ -18,7 +18,7 @@ public class Settings {
 }
 
 
-** 슬라이드 43
+** 슬라이드 37
 
 package com.multi.bitlyclient;
 ......
@@ -54,7 +54,7 @@ public class IndexController {
 </html>
 
 
-** 슬라이드 45
+** 슬라이드 39
 
 package com.multi.bitlyclient;
 ......
@@ -95,7 +95,7 @@ public class CallbackController {
 }
 
 
-** 슬라이드 47
+** 슬라이드 41
 
 package com.multi.bitlyclient;
 ……
@@ -114,7 +114,7 @@ public class MainController {
 
 
 
-** 슬라이드 48
+** 슬라이드 42
 
 <html xmlns:th="http://www.thymeleaf.org">
 
@@ -156,7 +156,7 @@ public class MainController {
 </html>
 
 
-** 슬라이드 49
+** 슬라이드 43
 package com.multi.bitlyclient;
 ......
 @Controller
@@ -199,7 +199,7 @@ public class ShortenController {
 }
 
 
-** 슬라이드 57
+** 슬라이드 51
 
 server.port=80
 
@@ -214,7 +214,7 @@ keytool -genkeypair -alias oauth2-sample -keyalg RSA -keystore oauth2-sample.pfx
 
 
 
-** 슬라이드 58
+** 슬라이드 52
 
 DROP TABLE oauth2_authorization;
 DROP TABLE oauth2_registered_client;
@@ -304,7 +304,7 @@ CREATE TABLE authorities (
 
 
 
-** 슬라이드 59
+** 슬라이드 53
 
 package com.multi.oauth20server;
 
@@ -373,7 +373,7 @@ public class SpringSecurityConfig {
 }
 
 
-** 슬라이드 63
+** 슬라이드 57
 
 package com.multi.oauth20server;
 ......(import문 생략)
@@ -517,7 +517,7 @@ public class AuthorizationServerConfig {
 
 
 
-** 슬라이드 75
+** 슬라이드 69
 
 #server settings
 server.port=8000
@@ -536,7 +536,7 @@ spring.jpa.properties.hibernate.format_sql=true
 
 
 
-** 슬라이드 76
+** 슬라이드 70
 
 package com.multi.oauth20server.domain;
 ......
@@ -555,7 +555,7 @@ public class Contact {
 
 
 
-** 슬라이드 77
+** 슬라이드 71
 
 package com.multi.oauth20server.dao;
 
@@ -567,7 +567,7 @@ public interface ContactRepository extends JpaRepository<Contact, Long>{
 
 
 
-** 슬라이드 78
+** 슬라이드 72
 
 package com.multi.oauth20server;
 ......
@@ -592,7 +592,7 @@ public class ContactController {
 }
 
 
-** 슬라이드 80
+** 슬라이드 74
 
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -612,7 +612,7 @@ spring.h2.console.enabled=false
 spring.security.oauth2.resourceserver.jwt.issuer-uri=http://tfactory.com
 
 
-** 슬라이드 81
+** 슬라이드 75
 
 package com.multi.oauth20server;
 ......
@@ -645,7 +645,7 @@ public class ResourceSecurityConfig {
 }
 
 
-** 슬라이드 86
+** 슬라이드 80
 package com.multi.oauth20server;
 ......
 @RestController
